@@ -6,7 +6,7 @@ from sqlalchemy import select, and_, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.models import Room, Building, TagRoom, Booking, TimeSlot, Notification
+from ..db.models import Room, Building, TagRoom, Booking, TimeSlot, Notification
 
 async def search_best_room(
         session: AsyncSession,

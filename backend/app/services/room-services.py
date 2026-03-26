@@ -2,14 +2,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 import logging
 
-# Предполагается, что твой коллега создаст модель Room в файле models.py
-# from models import Room
+from ..db.models import Room
 
 logger = logging.getLogger(__name__)
 
 
 async def add_room(session: AsyncSession, id_building: int, room_number: int, capacity: int, description: str):
-    ## Добавляет новую комнату в базу данных.
     try:
         new_room = Room(
             id_building=id_building,
@@ -30,9 +28,6 @@ async def add_room(session: AsyncSession, id_building: int, room_number: int, ca
 
 async def update_room(session: AsyncSession, id_room: int, **kwargs) -> bool:
 
-    ## Обновляет данные существующей комнаты.
-    ## В kwargs можно передать поля для обновления
-
     try:
         if not kwargs:
             return False
@@ -41,7 +36,6 @@ async def update_room(session: AsyncSession, id_room: int, **kwargs) -> bool:
         result = await session.execute(stmt)
         await session.commit()
 
-        # result.rowcount показывает была ли найдена или обновлена строка
         success = result.rowcount > 0
         if success:
             logger.info(f"Комната с ID {id_room} обновлена.")
@@ -53,8 +47,6 @@ async def update_room(session: AsyncSession, id_room: int, **kwargs) -> bool:
 
 
 async def delete_room(session: AsyncSession, id_room: int) -> bool:
-    ## Удаляет комнату
-    ## Благодаря ON DELETE CASCADE связанные слоты и бронирования удалятся автоматически.
     try:
         stmt = delete(Room).where(Room.id_room == id_room)
         result = await session.execute(stmt)
