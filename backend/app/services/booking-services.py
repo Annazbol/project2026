@@ -30,8 +30,6 @@ fake_rooms = [
 fake_bookings = []
 
 
-# --- 2. БИЗНЕС-ЛОГИКА ---
-
 async def search_best_room(
         id_building: Optional[int] = None,
         tags: Optional[List[str]] = None,
