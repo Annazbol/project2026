@@ -13,8 +13,6 @@ class Base(DeclarativeBase):
     pass
 
 
-# Справочники
-
 class Tag(Base):
     __tablename__ = "tags"
     tag_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
