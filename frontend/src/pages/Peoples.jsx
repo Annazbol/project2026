@@ -1,142 +1,99 @@
 import React, { useState, useEffect } from 'react';
-
+import { fetchAvailablePeopleCounts } from '../api/api';
 const tg = window.Telegram?.WebApp;
 
-export default function Peoples() {
+export default function Peoples({ onSelectPeople, goBack }) {
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
     const [availableOptions, setAvailableOptions] = useState([]);
     const [selectedCount, setSelectedCount] = useState(null);
-    const [warning, setWarning] = useState('');
+    const [error, setError] = useState(null);
 
-    const fetchAvailableOptions = async () => {
-        try {
-            setLoading(true);
-            setError(false);
-            
-            const response = await fetch('/api/available-people-counts', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Telegram-Init-Data': tg?.initData || ''
-                },
-                body: JSON.stringify({})
-            });
-            
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setAvailableOptions(data.available_counts || [1, 2, 3, 4, 5, 6, 8, 10]);
-                if (data.warning) setWarning(data.warning);
-            } else {
-                throw new Error(data.error || 'Неизвестная ошибка');
-            }
-        } catch (err) {
-            console.error('Ошибка:', err);
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const goBack = () => {
-        tg?.sendData(JSON.stringify({ action: 'back', step: 'people_count' }));
-        tg?.close();
-    };
-
-    const submitSelection = () => {
-        if (!selectedCount) {
-            tg?.showAlert('Пожалуйста, выберите количество человек');
-            return;
-        }
-        tg?.sendData(JSON.stringify({
-            action: 'select_people_count',
-            people_count: selectedCount
-        }));
-        tg?.close();
-    };
-
+    // Загружаем доступные варианты при открытии экрана
     useEffect(() => {
-        if (tg) {
-            tg.expand();
-            tg.setHeaderColor('bg_color');
-            tg.BackButton.show();
-            tg.BackButton.onClick(goBack);
-        }
-        
-        fetchAvailableOptions();
-
-        return () => {
-            tg?.BackButton.offClick(goBack);
+        const loadOptions = async () => {
+            try {
+                setLoading(true);
+                // Делаем запрос к вашему FastAPI
+                const data = await fetchAvailablePeopleCounts();
+                
+                // Если бэкенд вернул success: true и список
+                if (data.success) {
+                    setAvailableOptions(data.available_counts);
+                } else {
+                    // Если данных нет, ставим стандартный набор (заглушка)
+                    setAvailableOptions([1, 2, 4, 6, 8]);
+                }
+            } catch (err) {
+                console.error("Ошибка загрузки вместимости:", err);
+                setError("Не удалось загрузить данные");
+                // Стандартные значения на случай ошибки сервера
+                setAvailableOptions([1, 2, 3, 4, 5]);
+            } finally {
+                setLoading(false);
+            }
         };
+
+        loadOptions();
     }, []);
 
+    const handleConfirm = () => {
+        if (selectedCount) {
+            tg?.HapticFeedback.impactOccurred('medium');
+            onSelectPeople(selectedCount); // Передаем выбор в App.js
+        }
+    };
+
+    if (loading) return <div className="loader">Загрузка вариантов...</div>;
+
     return (
-        <div className="container">
-            <div className="header">
-                <h1>Выбор количества человек</h1>
-                <p className="subtitle">Выберите количество участников бронирования</p>
+        <div className="peoples-container" style={{ padding: '20px', color: 'var(--tg-theme-text-color)' }}>
+            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Сколько вас будет?</h2>
+            
+            {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+
+            <div className="options-grid" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '12px',
+                marginBottom: '30px' 
+            }}>
+                {availableOptions.map(count => (
+                    <button
+                        key={count}
+                        onClick={() => setSelectedCount(count)}
+                        style={{
+                            padding: '15px',
+                            borderRadius: '12px',
+                            border: '2px solid',
+                            borderColor: selectedCount === count ? 'var(--tg-theme-button-color)' : 'rgba(0,0,0,0.1)',
+                            backgroundColor: selectedCount === count ? 'var(--tg-theme-button-color)' : 'var(--tg-theme-secondary-bg-color)',
+                            color: selectedCount === count ? 'var(--tg-theme-button-text-color)' : 'var(--tg-theme-text-color)',
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        {count} {count === 1 ? 'человек' : 'человека'}
+                    </button>
+                ))}
             </div>
 
-            {loading && (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Загрузка доступных вариантов...</p>
-                </div>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button 
+                    className="btn-primary" 
+                    disabled={!selectedCount}
+                    onClick={handleConfirm}
+                    style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        backgroundColor: 'var(--tg-theme-button-color)',
+                        color: 'var(--tg-theme-button-text-color)',
+                        opacity: selectedCount ? 1 : 0.6,
+                        fontWeight: 'bold'
+                    }}
+                >
+                    Продолжить
+                </button>
 
-            {error && !loading && (
-                <div className="error-state">
-                    <p>⚠️ Не удалось загрузить доступные варианты</p>
-                    <button 
-                        className="btn" 
-                        style={{ backgroundColor: 'var(--tg-theme-secondary-bg-color)', marginTop: '12px' }} 
-                        onClick={fetchAvailableOptions}
-                    >
-                        Повторить
-                    </button>
-                </div>
-            )}
-
-            {!loading && !error && (
-                <div>
-                    <div className="section-title">Доступные варианты</div>
-                    
-                    <div className="options-grid" style={{ marginBottom: '24px' }}>
-                        {availableOptions.length === 0 ? (
-                            <div className="no-options">Нет доступных вариантов</div>
-                        ) : (
-                            availableOptions.map(count => (
-                                <button
-                                    key={count}
-                                    className={`option-btn ${selectedCount === count ? 'selected' : ''}`}
-                                    onClick={() => setSelectedCount(count)}
-                                >
-                                    {count} чел.
-                                </button>
-                            ))
-                        )}
-                    </div>
-
-                    {warning && (
-                        <div className="warning-message">
-                            <p>⚠️ {warning}</p>
-                        </div>
-                    )}
-
-                    <button 
-                        className="btn btn-primary" 
-                        disabled={!selectedCount || availableOptions.length === 0}
-                        onClick={submitSelection}
-                    >
-                        Продолжить
-                    </button>
-                </div>
-            )}
-
-            <button className="btn btn-back" onClick={goBack}>← Назад</button>
-        </div>
-    );
-}
+                <button

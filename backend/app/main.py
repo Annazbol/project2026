@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 from db.database import get_db
 from db.models import Room
 import services.bookingServices as bookingServices
-import schemas.schemas
+from schemas import schemas
 
 app = FastAPI(title="VyatGU Coworking API")
 
@@ -59,12 +59,10 @@ async def get_time_slots(
                 is_available = slot_time in available_times
 
                 time_str = slot_time.strftime("%H:%M")
-                end_time = (datetime.combine(date.today(), slot_time) + timedelta(minutes=15)).strftime("%H:%M")
 
                 slots.append(schemas.TimeSlotItem(
                     time=time_str,
                     start=time_str,
-                    end=end_time,
                     is_available=is_available
                 ))
 

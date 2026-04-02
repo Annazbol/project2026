@@ -2,137 +2,120 @@ import React, { useState, useEffect } from 'react';
 
 const tg = window.Telegram?.WebApp;
 
-export default function MainMenu() {
+export default function MainMenu({ onStartBooking }) {
     const [user, setUser] = useState(null);
-    const [activeNav, setActiveNav] = useState('home');
-    const [toastMessage, setToastMessage] = useState('');
 
     useEffect(() => {
         if (tg) {
             tg.expand();
+            // Устанавливаем цвета темы Telegram
             tg.setHeaderColor('bg_color');
             tg.setBackgroundColor('bg_color');
             setUser(tg.initDataUnsafe?.user || null);
+            
+            // Скрываем кнопку "Назад" на главном экране
+            tg.BackButton.hide();
         }
     }, []);
 
-    const showToast = (message) => {
-        setToastMessage(message);
-        setTimeout(() => setToastMessage(''), 3000);
-    };
-
-    const handleMenuAction = (action) => {
+    // Функция для вызова действий, которые обрабатывает бот (Python)
+    const handleBotAction = (action) => {
+        tg?.HapticFeedback.impactOccurred('light');
+        // Отправляем данные боту и закрываем Mini App
         tg?.sendData(JSON.stringify({ action: action }));
         tg?.close();
     };
 
-    const handleNavAction = (nav) => {
-        setActiveNav(nav);
-        switch(nav) {
-            case 'home':
-                showToast('Вы на главной странице');
-                break;
-            case 'book':
-                handleMenuAction('start_booking');
-                break;
-            case 'bookings':
-                handleMenuAction('my_bookings');
-                break;
-            case 'rooms':
-                handleMenuAction('show_rooms');
-                break;
-            case 'buildings':
-                handleMenuAction('show_buildings');
-                break;
-            default:
-                showToast('Функция в разработке');
-        }
-    };
-
     return (
-        <div className="container" style={{ paddingBottom: '80px' }}>
-            <div className="welcome-section">
-                <div className="avatar">
+        <div className="container" style={{ padding: '16px', paddingBottom: '80px' }}>
+            {/* Секция приветствия */}
+            <div className="welcome-section" style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div className="avatar" style={{ 
+                    width: '64px', height: '64px', borderRadius: '50%', 
+                    background: 'var(--tg-theme-button-color)', color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 12px', fontSize: '24px'
+                }}>
                     {user?.first_name ? user.first_name.charAt(0).toUpperCase() : '👤'}
                 </div>
-                <div className="welcome-text">
-                    Здравствуйте, {user?.first_name || 'гость'}!
+                <h2 style={{ margin: '0', color: 'var(--tg-theme-text-color)' }}>
+                    Привет, {user?.first_name || 'студент'}!
+                </h2>
+                <p style={{ color: 'var(--tg-theme-hint-color)', fontSize: '14px' }}>
+                    Система бронирования коворкингов ВятГУ
+                </p>
+            </div>
+
+            {/* Карточка режима работы */}
+            <div className="schedule-card" style={{ 
+                background: 'var(--tg-theme-secondary-bg-color)', 
+                padding: '16px', borderRadius: '16px', marginBottom: '24px' 
+            }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>🕐 Режим работы</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '4px' }}>
+                    <span>Будни</span>
+                    <span>8:00 – 20:30</span>
                 </div>
-                <div className="user-info">
-                    {user?.username ? `@${user.username}` : 'Система бронирования комнат отдыха ВятГУ'}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                    <span>Суббота</span>
+                    <span>8:00 – 18:00</span>
                 </div>
             </div>
 
-            <div className="stats-section">
-                <div className="stat-card">
-                    <div className="stat-value">0</div>
-                    <div className="stat-label">Активных броней</div>
+            <div className="menu-title" style={{ fontWeight: 'bold', marginBottom: '12px' }}>Действия</div>
+            
+            <div className="menu-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                
+                {/* ГЛАВНАЯ КНОПКА: Начинает процесс бронирования внутри React */}
+                <div className="menu-item" 
+                    onClick={onStartBooking} 
+                    style={{ 
+                        display: 'flex', alignItems: 'center', padding: '16px', 
+                        background: 'var(--tg-theme-button-color)', color: 'var(--tg-theme-button-text-color)',
+                        borderRadius: '16px', cursor: 'pointer'
+                    }}
+                >
+                    <div style={{ fontSize: '24px', marginRight: '16px' }}>📅</div>
+                    <div style={{ flexGrow: 1 }}>
+                        <div style={{ fontWeight: 'bold' }}>Забронировать</div>
+                        <div style={{ fontSize: '12px', opacity: 0.8 }}>Выбрать комнату и время</div>
+                    </div>
+                    <div style={{ fontWeight: 'bold' }}>→</div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-value">0</div>
-                    <div className="stat-label">Всего бронирований</div>
-                </div>
-            </div>
 
-            <div className="schedule-card">
-                <div className="schedule-title">🕐 Режим работы коворкингов</div>
-                <div className="schedule-row">
-                    <span className="schedule-label">Часы работы</span>
-                    <span className="schedule-value">8:00 – 20:30</span>
-                </div>
-                <div className="schedule-row">
-                    <span className="schedule-label">Дни недели</span>
-                    <span className="schedule-value">Понедельник – Суббота</span>
-                </div>
-                <div className="schedule-row">
-                    <span className="schedule-label">Воскресенье</span>
-                    <span className="schedule-value">Выходной</span>
-                </div>
-            </div>
-
-            <div className="menu-title">Основные действия</div>
-            <div className="menu-grid">
+                {/* Остальные кнопки: Взаимодействуют с ботом напрямую */}
                 {[
-                    { id: 'book', icon: '📅', name: 'Забронировать', desc: 'Забронировать комнату отдыха', action: 'book', iconClass: '' },
-                    { id: 'my_bookings', icon: '📋', name: 'Мои бронирования', desc: 'Просмотр и управление бронями', action: 'my_bookings', iconClass: 'secondary' },
-                    { id: 'rooms', icon: '🏢', name: 'Все комнаты отдыха', desc: 'Список всех доступных комнат', action: 'rooms', iconClass: 'info' },
-                    { id: 'buildings', icon: '📍', name: 'Корпуса ВятГУ', desc: 'Информация о корпусах и коворкингах', action: 'buildings', iconClass: 'building' }
+                    { id: 'my_bookings', icon: '📋', name: 'Мои бронирования', action: 'my_bookings' },
+                    { id: 'buildings', icon: '📍', name: 'Корпуса и адреса', action: 'show_buildings' },
                 ].map(item => (
-                    <div key={item.id} className="menu-item" onClick={() => handleMenuAction(item.action)}>
-                        <div className={`menu-icon ${item.iconClass}`}>{item.icon}</div>
-                        <div className="menu-content">
-                            <div className="menu-name">{item.name}</div>
-                            <div className="menu-desc">{item.desc}</div>
+                    <div key={item.id} 
+                        className="menu-item" 
+                        onClick={() => handleBotAction(item.action)}
+                        style={{ 
+                            display: 'flex', alignItems: 'center', padding: '16px', 
+                            background: 'var(--tg-theme-secondary-bg-color)', 
+                            borderRadius: '16px', cursor: 'pointer'
+                        }}
+                    >
+                        <div style={{ fontSize: '24px', marginRight: '16px' }}>{item.icon}</div>
+                        <div style={{ flexGrow: 1 }}>
+                            <div style={{ fontWeight: 'bold', color: 'var(--tg-theme-text-color)' }}>{item.name}</div>
                         </div>
-                        <div className="menu-arrow">→</div>
+                        <div style={{ color: 'var(--tg-theme-hint-color)' }}>→</div>
                     </div>
                 ))}
             </div>
 
-            <button className="btn-outline" onClick={() => handleMenuAction('support')}>
+            <button 
+                onClick={() => handleBotAction('support')}
+                style={{ 
+                    width: '100%', marginTop: '24px', padding: '12px', 
+                    background: 'none', border: '1px solid var(--tg-theme-hint-color)',
+                    color: 'var(--tg-theme-hint-color)', borderRadius: '12px', fontSize: '14px'
+                }}
+            >
                 ❓ Помощь и поддержка
             </button>
-
-            {toastMessage && <div className="toast">{toastMessage}</div>}
-
-            <div className="bottom-nav">
-                {[
-                    { id: 'home', icon: '🏠', label: 'Главная' },
-                    { id: 'book', icon: '📅', label: 'Бронь' },
-                    { id: 'bookings', icon: '📋', label: 'Мои' },
-                    { id: 'rooms', icon: '🏢', label: 'Комнаты' },
-                    { id: 'buildings', icon: '📍', label: 'Корпуса' }
-                ].map(nav => (
-                    <div 
-                        key={nav.id} 
-                        className={`nav-item ${activeNav === nav.id ? 'active' : ''}`} 
-                        onClick={() => handleNavAction(nav.id)}
-                    >
-                        <div className="nav-icon">{nav.icon}</div>
-                        <div className="nav-label">{nav.label}</div>
-                    </div>
-                ))}
-            </div>
         </div>
     );
 }

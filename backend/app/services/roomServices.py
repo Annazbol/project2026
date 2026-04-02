@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 import logging
 
-from ..db.models import Room
+from db.models import Room
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ class RoomResponse(BaseModel):
 class TimeSlotRequest(BaseModel):
     room_id: int
     slot_date: date
-    people_count: int
+    num_of_people: int
 
 class PeopleCountResponse(BaseModel):
     success: bool
@@ -36,7 +36,7 @@ class TimeSlotResponse(BaseModel):
     error: Optional[str] = None
 
 class CreateBookingRequest(BaseModel):
-    user_id: int
+    user_id: str
     room_id: int
     slot_date: date
     start_time: time
