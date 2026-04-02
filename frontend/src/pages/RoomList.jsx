@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchRooms } from './api'; // Импортируем вашу функцию
+import { fetchRooms } from '../api'; // Импортируем вашу функцию
 
 const tg = window.Telegram?.WebApp;
 

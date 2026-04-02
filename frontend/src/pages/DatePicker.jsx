@@ -86,4 +86,72 @@ const DatePicker = ({ onSelectDate, goBack }) => {
       
       <div style={{ 
         background: 'var(--tg-theme-secondary-bg-color)', 
-        padding
+        padding: '15px', 
+        borderRadius: '15px',
+        marginBottom: '20px' 
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
+            style={{ background: 'none', border: 'none', color: 'var(--tg-theme-button-color)', fontSize: '18px' }}
+          >
+            ←
+          </button>
+          <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>
+            {currentMonth.toLocaleString('ru-RU', { month: 'long', year: 'numeric' })}
+          </span>
+          <button 
+            onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
+            style={{ background: 'none', border: 'none', color: 'var(--tg-theme-button-color)', fontSize: '18px' }}
+          >
+            →
+          </button>
+        </div>
+        
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(7, 1fr)', 
+          gap: '5px', 
+          textAlign: 'center', 
+          fontSize: '12px', 
+          color: 'var(--tg-theme-hint-color)',
+          marginBottom: '10px'
+        }}>
+          {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => <div key={day}>{day}</div>)}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '5px' }}>
+          {renderDays()}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <button 
+          disabled={!selectedDate}
+          onClick={confirmDate}
+          style={{ 
+            padding: '16px', 
+            borderRadius: '12px', 
+            border: 'none', 
+            backgroundColor: 'var(--tg-theme-button-color)', 
+            color: 'var(--tg-theme-button-text-color)',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            opacity: selectedDate ? 1 : 0.5
+          }}
+        >
+          {selectedDate ? `Выбрать ${new Date(selectedDate).toLocaleDateString('ru-RU')}` : 'Выберите день'}
+        </button>
+        
+        <button 
+          onClick={goBack} 
+          style={{ background: 'none', border: 'none', color: 'var(--tg-theme-hint-color)', padding: '10px' }}
+        >
+          ← Назад к списку комнат
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default DatePicker;

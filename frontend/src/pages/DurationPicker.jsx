@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createBooking } from './api'; // Импорт функции финального бронирования
+import { createBooking } from '../api'; // Импорт функции финального бронирования
 
 const tg = window.Telegram?.WebApp;
 

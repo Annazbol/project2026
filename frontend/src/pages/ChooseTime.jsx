@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAvailableTimeSlots } from './api';
+import { fetchAvailableTimeSlots } from '../api'; // Импорт вашей функции из api.js
 
 const tg = window.Telegram?.WebApp;
 
-export default function ChooseTime({ room_id, selectedDate, num_of_people, onSelectTime, goBack }) {
+export default function ChooseTime({ selectedRoomId, selectedDate, peopleCount, onSelectTime, goBack }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [timeSlots, setTimeSlots] = useState([]);
@@ -15,15 +15,17 @@ export default function ChooseTime({ room_id, selectedDate, num_of_people, onSel
                 setLoading(true);
                 setError(false);
                 
+                // Формируем тело запроса для вашего FastAPI
                 const payload = {
-                    room_id: room_id,
+                    room_id: selectedRoomId,
                     slot_date: selectedDate,
-                    num_of_people: num_of_people
+                    num_of_people: peopleCount
                 };
 
                 const data = await fetchAvailableTimeSlots(payload);
                 
                 if (data.success) {
+                    // Предполагаем, что бэкенд возвращает список объектов [{time: "09:00", start: "09:00", is_available: true}, ...]
                     setTimeSlots(data.time_slots || []);
                 } else {
                     throw new Error("Не удалось получить слоты");
@@ -39,12 +41,12 @@ export default function ChooseTime({ room_id, selectedDate, num_of_people, onSel
         if (selectedRoomId && selectedDate) {
             loadSlots();
         }
-    }, [room_id, selectedDate, num_of_people]);
+    }, [selectedRoomId, selectedDate, peopleCount]);
 
     const handleConfirm = () => {
         if (selectedSlot) {
             tg?.HapticFeedback.impactOccurred('medium');
-            onSelectTime(selectedSlot);
+            onSelectTime(selectedSlot); // Передаем объект слота в App.js
         }
     };
 
@@ -81,4 +83,49 @@ export default function ChooseTime({ room_id, selectedDate, num_of_people, onSel
                                 padding: '12px 5px',
                                 borderRadius: '10px',
                                 border: 'none',
-                                backgroundColor: selected
+                                backgroundColor: selectedSlot?.time === slot.time 
+                                    ? 'var(--tg-theme-button-color)' 
+                                    : 'var(--tg-theme-secondary-bg-color)',
+                                color: selectedSlot?.time === slot.time 
+                                    ? 'var(--tg-theme-button-text-color)' 
+                                    : (slot.is_available ? 'var(--tg-theme-text-color)' : 'var(--tg-theme-hint-color)'),
+                                opacity: slot.is_available ? 1 : 0.4,
+                                cursor: slot.is_available ? 'pointer' : 'default',
+                                fontWeight: '500'
+                            }}
+                        >
+                            {slot.time}
+                        </button>
+                    ))
+                ) : (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
+                        Свободного времени не осталось 
+                    </div>
+                )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button 
+                    className="btn-primary" 
+                    disabled={!selectedSlot}
+                    onClick={handleConfirm}
+                    style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        backgroundColor: 'var(--tg-theme-button-color)',
+                        color: 'var(--tg-theme-button-text-color)',
+                        fontWeight: 'bold',
+                        opacity: selectedSlot ? 1 : 0.6
+                    }}
+                >
+                    Подтвердить время
+                </button>
+                
+                <button onClick={goBack} style={{ background: 'none', border: 'none', color: 'var(--tg-theme-link-color)', padding: '10px' }}>
+                    ← Изменить количество человек
+                </button>
+            </div>
+        </div>
+    );
+}

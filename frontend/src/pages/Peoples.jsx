@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAvailablePeopleCounts } from '../api/api';
+import { fetchAvailablePeopleCounts } from '../api'; // Импортируем функцию из вашего api.js
+
 const tg = window.Telegram?.WebApp;
 
 export default function Peoples({ onSelectPeople, goBack }) {
@@ -96,4 +97,19 @@ export default function Peoples({ onSelectPeople, goBack }) {
                     Продолжить
                 </button>
 
-                <button
+                <button 
+                    onClick={goBack}
+                    style={{
+                        padding: '10px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--tg-theme-hint-color)',
+                        cursor: 'pointer'
+                    }}
+                >
+                    ← Назад к выбору даты
+                </button>
+            </div>
+        </div>
+    );
+}
