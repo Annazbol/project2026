@@ -1,0 +1,24 @@
+.duration-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+}
+
+.duration-item {
+    position: relative;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--tg-theme-secondary-bg-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popular-badge {
+    background: #ff9800;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+}

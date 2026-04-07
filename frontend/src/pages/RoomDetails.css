@@ -1,0 +1,39 @@
+.room-details-container {
+    padding: 0 0 20px 0;
+}
+
+.details-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.details-content {
+    padding: 20px 16px;
+}
+
+.details-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.details-desc {
+    color: var(--tg-theme-hint-color);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.tag {
+    background: var(--tg-theme-secondary-bg-color);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+}

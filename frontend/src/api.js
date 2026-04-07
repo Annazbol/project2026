@@ -39,3 +39,13 @@ export const fetchAvailablePeopleCounts = () => request('/available-people-count
 export const fetchAvailableTimeSlots = (data) => request('/available-time-slots', 'POST', data);
 
 export const createBooking = (data) => request('/book', 'POST', data);
+
+export const fetchRoomById = async (id) => {
+    const response = await axios.get(`/api/rooms/${id}`);
+    return response.data;
+};
+
+export const fetchUserBookings = async (userId) => {
+    const response = await axios.get(`/api/bookings/user/${userId}`);
+    return response.data;
+};

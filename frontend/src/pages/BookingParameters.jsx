@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import './BookingParameters.css';
 
 const tg = window.Telegram?.WebApp;
 
@@ -79,108 +80,6 @@ export default function BookingParams() {
 
             <button className="btn-back" onClick={goBack}>← Назад</button>
 
-            <style jsx>{`
-                .container {
-                    max-width: 400px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    padding-bottom: 40px;
-                }
-
-                .header {
-                    margin-bottom: 24px;
-                    padding-top: 20px;
-                }
-
-                .header h1 {
-                    font-size: 28px;
-                    font-weight: 600;
-                    margin-bottom: 8px;
-                    color: var(--tg-theme-text-color, #000000);
-                }
-
-                .subtitle {
-                    font-size: 14px;
-                    color: var(--tg-theme-hint-color, #8e8e93);
-                }
-
-                .schedule-info {
-                    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
-                    border-radius: 16px;
-                    padding: 16px;
-                    margin-bottom: 24px;
-                }
-
-                .schedule-row {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 6px 0;
-                    font-size: 13px;
-                    color: var(--tg-theme-text-color, #000000);
-                }
-
-                .params-grid {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    margin-bottom: 24px;
-                }
-
-                .param-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
-                    border: none;
-                    border-radius: 16px;
-                    padding: 16px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    width: 100%;
-                    text-align: left;
-                }
-
-                .param-btn:active {
-                    transform: scale(0.98);
-                }
-
-                .param-icon {
-                    font-size: 32px;
-                }
-
-                .param-content {
-                    flex: 1;
-                }
-
-                .param-label {
-                    font-size: 16px;
-                    font-weight: 600;
-                    margin-bottom: 4px;
-                    color: var(--tg-theme-text-color, #000000);
-                }
-
-                .param-desc {
-                    font-size: 12px;
-                    color: var(--tg-theme-hint-color, #8e8e93);
-                }
-
-                .param-arrow {
-                    font-size: 20px;
-                    color: var(--tg-theme-hint-color, #8e8e93);
-                }
-
-                .btn-back {
-                    width: 100%;
-                    padding: 14px 20px;
-                    background-color: transparent;
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: var(--tg-theme-link-color, #2481cc);
-                    cursor: pointer;
-                }
-            `}</style>
         </div>
     );
 }

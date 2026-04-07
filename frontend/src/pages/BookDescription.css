@@ -1,0 +1,193 @@
+.booking-details-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--tg-theme-bg-color, #f8f9fc);
+    color: var(--tg-theme-text-color, #1a1a2e);
+    padding: 16px;
+    padding-bottom: 100px;
+    min-height: 100vh;
+}
+
+.booking-details-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.bd-header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 8px;
+}
+
+.bd-logo {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2a5c8a, #4a90e2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.back-button {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: var(--tg-theme-text-color, #000);
+}
+
+.back-button:active {
+    transform: scale(0.95);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.status-active { background: #e3f7ec; color: #1e7b48; }
+.status-pending { background: #fff3e0; color: #c97e00; }
+.status-cancelled { background: #ffebee; color: #c62828; }
+.status-completed { background: #e3f2fd; color: #1565c0; }
+
+.room-image {
+    width: 100%;
+    height: 200px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+}
+
+.room-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 48px;
+}
+
+.info-card {
+    background: var(--tg-theme-secondary-bg-color, #ffffff);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.info-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tg-theme-hint-color, #666);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.room-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--tg-theme-text-color, #1a1a2e);
+}
+
+.location-info {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--tg-theme-hint-color, #eee);
+}
+
+.location-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--tg-theme-hint-color, #666);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--tg-theme-hint-color, #f0f0f0);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color, #666);
+}
+
+.detail-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #1a1a2e);
+}
+
+.room-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--tg-theme-text-color, #333);
+    margin-top: 12px;
+}
+
+.bd-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.bd-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-primary { background: var(--tg-theme-button-color, #4a90e2); color: white; }
+.btn-secondary { background: var(--tg-theme-secondary-bg-color, #eef2f7); color: var(--tg-theme-text-color, #333); border: 1px solid var(--tg-theme-hint-color, #ddd); }
+.btn-danger { background: #dc3545; color: white; }
+
+.bd-btn:active { transform: scale(0.97); }
+
+@media (max-width: 480px) {
+    .bd-actions { flex-direction: column; }
+}
