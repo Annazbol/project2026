@@ -24,20 +24,13 @@ def _get(data: dict, key_path: str) -> Any:
     node = data
     for part in parts:
         if not isinstance(node, dict) or part not in node:
-            return key_path  # возвращаем путь как fallback
+            return key_path  
         node = node[part]
     return node
 
 
 def t(key: str, lang: str = DEFAULT_LANG, **kwargs) -> str:
-    """
-    Получить локализованную строку.
-
-    Пример:
-        t("errors.room_not_found")
-        t("errors.capacity_exceeded", capacity=10, requested=15)
-        t("notifications.reminder_tomorrow", time="10:00", room_number=207)
-    """
+    
     data = _load(lang)
     value = _get(data, key)
     if kwargs:
