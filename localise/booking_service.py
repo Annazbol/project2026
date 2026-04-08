@@ -7,11 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.models import Booking, Room, TimeSlot, Notification
 from .localization import t
 
-
-# =============================================================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-# =============================================================================
-
 async def get_booking_by_id(session: AsyncSession, book_id: int) -> Optional[Booking]:
     result = await session.execute(select(Booking).where(Booking.book_id == book_id))
     return result.scalar_one_or_none()
@@ -41,7 +36,6 @@ async def get_available_dates_for_edit(
     num_of_people: int,
     exclude_book_id: int,
 ) -> list[date]:
-    """Доступные даты для изменения бронирования."""
     result = await session.execute(
         select(TimeSlot.slot_date)
         .join(Room, Room.id_room == TimeSlot.id_room)
@@ -64,7 +58,6 @@ async def get_available_times_for_edit(
     num_of_people: int,
     exclude_book_id: int,
 ) -> list[time]:
-    """Доступные времена для изменения бронирования на выбранную дату."""
     result = await session.execute(
         select(TimeSlot.start_time)
         .join(Room, Room.id_room == TimeSlot.id_room)
@@ -81,12 +74,10 @@ async def get_available_times_for_edit(
 
 
 def _is_editable(booking: Booking) -> bool:
-    """Можно редактировать только брони со статусом 1 или 2."""
     return booking.status in (1, 2)
 
 
 def _is_cancellable(booking: Booking) -> bool:
-    """Нельзя отменить завершённые (8), уже отменённые (7) и неявки (6)."""
     return booking.status not in (6, 7, 8)
 
 
@@ -105,11 +96,6 @@ async def _send_notification(
     )
     session.add(notif)
 
-
-# =============================================================================
-# ИЗМЕНЕНИЕ БРОНИРОВАНИЯ
-# =============================================================================
-
 async def update_booking(
     session: AsyncSession,
     book_id: int,
@@ -120,22 +106,7 @@ async def update_booking(
     new_num_of_people: Optional[int] = None,
     new_room_id: Optional[int] = None,
 ) -> Booking:
-    """
-    Изменить бронирование. Любой параметр можно передать частично —
-    остальные подставятся автоматически из текущей брони.
-
-    Параметры:
-        book_id           — ID изменяемого бронирования
-        lang              — язык сообщений ("ru" / "en")
-        new_date          — новая дата (опционально)
-        new_start_time    — новое время начала (опционально)
-        new_duration      — новая длительность (опционально, макс. 3 часа)
-        new_num_of_people — новое количество людей (опционально)
-        new_room_id       — новая комната (опционально)
-
-    Возвращает обновлённый объект Booking.
-    Выбрасывает ValueError с локализованным сообщением при ошибке.
-    """
+    
     booking = await get_booking_by_id(session, book_id)
     if not booking:
         raise ValueError(t("errors.booking_not_found", lang))
@@ -143,12 +114,10 @@ async def update_booking(
     if not _is_editable(booking):
         raise ValueError(t("errors.booking_not_found", lang))
 
-    # --- Автоподстановка текущих значений ---
     target_room_id = new_room_id or booking.room_id
     target_duration = new_duration or booking.duration
     target_num = new_num_of_people or booking.num_of_people
 
-    # Определяем текущие дату/время из слота или backup
     current_date = booking.slot_date_backup
     current_time = booking.start_time_backup
     if booking.id_slot:
@@ -160,12 +129,10 @@ async def update_booking(
     target_date = new_date or current_date
     target_time = new_start_time or current_time
 
-    # --- Проверка длительности ---
     duration_td = timedelta(hours=target_duration.hour, minutes=target_duration.minute)
     if duration_td > timedelta(hours=3):
         raise ValueError(t("errors.duration_too_long", lang))
 
-    # --- Проверка комнаты и вместимости ---
     room = await session.get(Room, target_room_id)
     if not room:
         raise ValueError(t("errors.room_not_found", lang))
@@ -174,12 +141,10 @@ async def update_booking(
             t("errors.capacity_exceeded", lang, capacity=room.capacity, requested=target_num)
         )
 
-    # --- Поиск нового слота ---
     new_slot = await get_slot(session, target_room_id, target_date, target_time)
     if not new_slot:
         raise ValueError(t("errors.booking_not_found", lang))
 
-    # --- Проверка занятости слота (исключая текущую бронь) ---
     end_time = (datetime.combine(target_date, target_time) + duration_td).time()
 
     conflict_result = await session.execute(
@@ -207,14 +172,13 @@ async def update_booking(
     if conflict_result.scalar_one_or_none():
         raise ValueError(t("errors.time_conflict", lang))
 
-    # --- Применяем изменения ---
     booking.room_id = target_room_id
     booking.id_slot = new_slot.id_slot
     booking.slot_date_backup = target_date
     booking.start_time_backup = target_time
     booking.duration = target_duration
     booking.num_of_people = target_num
-    booking.status = 1  # Сброс на "ожидает подтверждения администратором"
+    booking.status = 1 
 
     await _send_notification(
         session,
@@ -229,27 +193,12 @@ async def update_booking(
     return booking
 
 
-# =============================================================================
-# ОТМЕНА БРОНИРОВАНИЯ
-# =============================================================================
-
 async def cancel_booking(
     session: AsyncSession,
     book_id: int,
     user_id: int,
     lang: str = "ru",
 ) -> Booking:
-    """
-    Отменить бронирование пользователем.
-
-    Параметры:
-        book_id  — ID бронирования
-        user_id  — ID пользователя (проверяется владелец)
-        lang     — язык сообщений ("ru" / "en")
-
-    Возвращает обновлённый объект Booking.
-    Выбрасывает ValueError с локализованным сообщением при ошибке.
-    """
     booking = await get_booking_by_id(session, book_id)
     if not booking:
         raise ValueError(t("errors.booking_not_found", lang))
@@ -260,7 +209,7 @@ async def cancel_booking(
     if not _is_cancellable(booking):
         raise ValueError(t("errors.booking_not_found", lang))
 
-    booking.status = 7  # Отменено
+    booking.status = 7
 
     await _send_notification(
         session,
@@ -281,17 +230,6 @@ async def cancel_booking_by_admin(
     lang: str = "ru",
     reason: str = "",
 ) -> Booking:
-    """
-    Отменить бронирование администратором.
-
-    Параметры:
-        book_id — ID бронирования
-        lang    — язык сообщений ("ru" / "en")
-        reason  — причина отмены (опционально)
-
-    Возвращает обновлённый объект Booking.
-    Выбрасывает ValueError с локализованным сообщением при ошибке.
-    """
     booking = await get_booking_by_id(session, book_id)
     if not booking:
         raise ValueError(t("errors.booking_not_found", lang))
@@ -299,7 +237,7 @@ async def cancel_booking_by_admin(
     if not _is_cancellable(booking):
         raise ValueError(t("errors.booking_not_found", lang))
 
-    booking.status = 7  # Отменено
+    booking.status = 7 
 
     title = t("admin.reject_booking_title", lang)
     message = t("admin.reject_booking_message", lang, id=book_id, name="")
