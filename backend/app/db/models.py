@@ -4,7 +4,7 @@ from typing import Optional, List
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, Date, ForeignKey,
     Integer, SmallInteger, String, Text, Time, TIMESTAMP,
-    UniqueConstraint, func, text
+    UniqueConstraint, func, text, BigInteger  # Добавили BigInteger
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -27,7 +27,8 @@ class ActivityType(Base):
     __tablename__ = "activity_types"
     id_type: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
-    activities: Mapped[List["UserActivity"]] = relationship(back_populates="activity_type_rel", cascade="all, delete-orphan")
+    activities: Mapped[List["UserActivity"]] = relationship(back_populates="activity_type_rel",
+                                                            cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<ActivityType id={self.id_type} name={self.name!r}>"
@@ -59,7 +60,8 @@ class Building(Base):
 class Room(Base):
     __tablename__ = "rooms"
     id_room: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    id_building: Mapped[int] = mapped_column(Integer, ForeignKey("buildings.building_id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    id_building: Mapped[int] = mapped_column(Integer, ForeignKey("buildings.building_id", ondelete="CASCADE",
+                                                                 onupdate="CASCADE"), nullable=False)
     room_number: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
@@ -77,7 +79,8 @@ class TimeSlot(Base):
     __tablename__ = "time_slots"
     __table_args__ = (UniqueConstraint("id_room", "slot_date", "start_time", name="uq_room_slot_time"),)
     id_slot: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    id_room: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    id_room: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
     slot_date: Mapped[date] = mapped_column(Date, nullable=False, server_default=func.current_date())
     start_time: Mapped[time] = mapped_column(Time, nullable=False, server_default=func.current_time())
     number_of_people: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -91,7 +94,8 @@ class TimeSlot(Base):
 class Photo(Base):
     __tablename__ = "photos"
     id_photo: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    id_room: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    id_room: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
     room: Mapped["Room"] = relationship(back_populates="photos")
 
@@ -102,8 +106,10 @@ class Photo(Base):
 class TagRoom(Base):
     __tablename__ = "tags_rooms"
     id_record: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tag: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("tags.tag_id", ondelete="CASCADE", onupdate="CASCADE"))
-    room: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"))
+    tag: Mapped[Optional[int]] = mapped_column(Integer,
+                                               ForeignKey("tags.tag_id", ondelete="CASCADE", onupdate="CASCADE"))
+    room: Mapped[Optional[int]] = mapped_column(Integer,
+                                                ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"))
     quantity: Mapped[Optional[int]] = mapped_column(Integer)
     tag_rel: Mapped[Optional["Tag"]] = relationship(back_populates="tag_rooms")
     room_rel: Mapped[Optional["Room"]] = relationship(back_populates="tag_rooms")
@@ -111,8 +117,6 @@ class TagRoom(Base):
     def __repr__(self) -> str:
         return f"<TagRoom id={self.id_record} tag={self.tag} room={self.room} qty={self.quantity}>"
 
-
-# Пользователи
 
 class User(Base):
     __tablename__ = "users"
@@ -123,20 +127,26 @@ class User(Base):
     phone_number: Mapped[Optional[str]] = mapped_column(String(50))
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     administrator: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+
+    # Telegram
+    tg_id: Mapped[Optional[int]] = mapped_column(BigInteger, unique=True, nullable=True)
+
     activities: Mapped[List["UserActivity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     bans: Mapped[List["Ban"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     bookings: Mapped[List["Booking"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     notifications: Mapped[List["Notification"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
-        return f"<User id={self.id_user} login={self.login!r} admin={self.administrator}>"
+        return f"<User id={self.id_user} login={self.login!r} tg_id={self.tg_id} admin={self.administrator}>"
 
 
 class UserActivity(Base):
     __tablename__ = "user_activity"
     id_record: Mapped[int] = mapped_column(Integer, primary_key=True)
-    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    activity_type: Mapped[int] = mapped_column(Integer, ForeignKey("activity_types.id_type", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
+    activity_type: Mapped[int] = mapped_column(Integer, ForeignKey("activity_types.id_type", ondelete="CASCADE",
+                                                                   onupdate="CASCADE"), nullable=False)
     activity_time: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     user: Mapped["User"] = relationship(back_populates="activities")
     activity_type_rel: Mapped["ActivityType"] = relationship(back_populates="activities")
@@ -148,7 +158,8 @@ class UserActivity(Base):
 class Ban(Base):
     __tablename__ = "bans"
     id_ban: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
     ban_start: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     ban_end: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -158,20 +169,23 @@ class Ban(Base):
         return f"<Ban id={self.id_ban} user={self.id_user} active={self.is_active}>"
 
 
-# --- Бронирования ---
-
 class Booking(Base):
     __tablename__ = "bookings"
     __table_args__ = (CheckConstraint("duration <= TIME '03:00:00'", name="chk_duration"),)
     book_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    room_id: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    id_slot: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("time_slots.id_slot", ondelete="SET NULL"), nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
+    room_id: Mapped[int] = mapped_column(Integer, ForeignKey("rooms.id_room", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
+    id_slot: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("time_slots.id_slot", ondelete="SET NULL"),
+                                                   nullable=True)
     slot_date_backup: Mapped[Optional[date]] = mapped_column(Date)
     start_time_backup: Mapped[Optional[time]] = mapped_column(Time)
     duration: Mapped[time] = mapped_column(Time, nullable=False)
     num_of_people: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[int] = mapped_column(Integer, ForeignKey("books_statuses.id_status", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, server_default=text("1"))
+    status: Mapped[int] = mapped_column(Integer,
+                                        ForeignKey("books_statuses.id_status", ondelete="CASCADE", onupdate="CASCADE"),
+                                        nullable=False, server_default=text("1"))
     user: Mapped["User"] = relationship(back_populates="bookings")
     room: Mapped["Room"] = relationship(back_populates="bookings")
     slot: Mapped[Optional["TimeSlot"]] = relationship(back_populates="bookings", foreign_keys=[id_slot])
@@ -185,8 +199,11 @@ class Booking(Base):
 class Notification(Base):
     __tablename__ = "notifications"
     id_notification: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    id_book: Mapped[int] = mapped_column(Integer, ForeignKey("bookings.book_id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
+    id_book: Mapped[int] = mapped_column(Integer,
+                                         ForeignKey("bookings.book_id", ondelete="CASCADE", onupdate="CASCADE"),
+                                         nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text("false"))

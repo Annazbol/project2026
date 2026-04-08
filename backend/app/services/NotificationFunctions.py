@@ -5,6 +5,7 @@ from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select, and_, insert
 from models import Notification, Booking, Ban, User  # модели из models.py
+import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,12 @@ class BanAware(BaseMiddleware):
         self.session_factory = session_factory
 
     async def __call__(self, handler, event: Message, data):
+        # ДОБАВЬ ЭТИ ПРИНТЫ:
+        print(f"--- DEBUG INFO ---")
+        print(f"User class location: {inspect.getfile(User)}")
+        print(f"Available attributes: {dir(User)}")
+        print(f"------------------")
+
         if not event.from_user:
             return await handler(event, data)
 
