@@ -1,113 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAvailablePeopleCounts } from '../api'; // Импортируем функцию из вашего api.js
+import { checkBookingOptions } from '../api';
+import './Peoples.css';
 
 const tg = window.Telegram?.WebApp;
 
-export default function Peoples({ onSelectPeople, goBack }) {
+export default function Peoples({ bookingData, onSelectPeople, goBack }) {
     const [loading, setLoading] = useState(true);
-    const [availableOptions, setAvailableOptions] = useState([]);
-    const [selectedCount, setSelectedCount] = useState(null);
-    const [error, setError] = useState(null);
+    const [maxCapacity, setMaxCapacity] = useState(10);
+    // Для слайдера нужно числовое значение по умолчанию (не null)
+    const [selectedCount, setSelectedCount] = useState(bookingData.people_count || 1);
 
-    // Загружаем доступные варианты при открытии экрана
     useEffect(() => {
         const loadOptions = async () => {
             try {
                 setLoading(true);
-                // Делаем запрос к вашему FastAPI
-                const data = await fetchAvailablePeopleCounts();
+                const data = await checkBookingOptions({ ...bookingData, people_count: null });
+                const max = data.max_capacity_found || 10;
+                setMaxCapacity(max);
                 
-                // Если бэкенд вернул success: true и список
-                if (data.success) {
-                    setAvailableOptions(data.available_counts);
-                } else {
-                    // Если данных нет, ставим стандартный набор (заглушка)
-                    setAvailableOptions([1, 2, 4, 6, 8]);
+                // Если текущее выбранное значение больше максимума - сбрасываем до макс.
+                if (selectedCount > max) {
+                    setSelectedCount(max);
                 }
             } catch (err) {
-                console.error("Ошибка загрузки вместимости:", err);
-                setError("Не удалось загрузить данные");
-                // Стандартные значения на случай ошибки сервера
-                setAvailableOptions([1, 2, 3, 4, 5]);
+                setMaxCapacity(10);
             } finally {
                 setLoading(false);
             }
         };
-
         loadOptions();
-    }, []);
+    }, [bookingData]);
 
-    const handleConfirm = () => {
-        if (selectedCount) {
-            tg?.HapticFeedback.impactOccurred('medium');
-            onSelectPeople(selectedCount); // Передаем выбор в App.js
-        }
+    const handleSliderChange = (e) => {
+        const val = parseInt(e.target.value, 10);
+        setSelectedCount(val);
+        // Вызываем легкую вибрацию при движении ползунка
+        tg?.HapticFeedback?.selectionChanged(); 
     };
 
-    if (loading) return <div className="loader">Загрузка вариантов...</div>;
+    const handleConfirm = () => {
+        tg?.HapticFeedback?.impactOccurred('medium');
+        onSelectPeople(selectedCount);
+    };
+
+    // Функция для правильных склонений (1 человек, 2 человека, 5 человек)
+    const getPeopleLabel = (count) => {
+        const mod10 = count % 10;
+        const mod100 = count % 100;
+        if (mod10 === 1 && mod100 !== 11) return 'человек';
+        if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'человека';
+        return 'человек';
+    };
+
+    if (loading) return <div className="loader">Загрузка...</div>;
+
+    // Вычисляем процент заполнения ползунка синим цветом
+    const fillPercentage = maxCapacity > 1 
+        ? ((selectedCount - 1) / (maxCapacity - 1)) * 100 
+        : 100;
 
     return (
-        <div className="peoples-container" style={{ padding: '20px', color: 'var(--tg-theme-text-color)' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Сколько вас будет?</h2>
-            
-            {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-
-            <div className="options-grid" style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: '12px',
-                marginBottom: '30px' 
-            }}>
-                {availableOptions.map(count => (
-                    <button
-                        key={count}
-                        onClick={() => setSelectedCount(count)}
-                        style={{
-                            padding: '15px',
-                            borderRadius: '12px',
-                            border: '2px solid',
-                            borderColor: selectedCount === count ? 'var(--tg-theme-button-color)' : 'rgba(0,0,0,0.1)',
-                            backgroundColor: selectedCount === count ? 'var(--tg-theme-button-color)' : 'var(--tg-theme-secondary-bg-color)',
-                            color: selectedCount === count ? 'var(--tg-theme-button-text-color)' : 'var(--tg-theme-text-color)',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        {count} {count === 1 ? 'человек' : 'человека'}
-                    </button>
-                ))}
+        <div className="peoples-container">
+            <div className="header-block">
+                <h2>Количество гостей</h2>
+                <p className="subtitle">Укажите, сколько человек будет присутствовать</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <button 
-                    className="btn-primary" 
-                    disabled={!selectedCount}
-                    onClick={handleConfirm}
-                    style={{
-                        padding: '16px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        backgroundColor: 'var(--tg-theme-button-color)',
-                        color: 'var(--tg-theme-button-text-color)',
-                        opacity: selectedCount ? 1 : 0.6,
-                        fontWeight: 'bold'
-                    }}
-                >
+            <div className="slider-section">
+                {/* Огромное число по центру */}
+                <div className="count-display">
+                    <span className="count-number">{selectedCount}</span>
+                    <span className="count-label">{getPeopleLabel(selectedCount)}</span>
+                </div>
+
+                {/* Сам ползунок */}
+                <div className="slider-wrapper">
+                    <span className="slider-min">1</span>
+                    <input
+                        type="range"
+                        min="1"
+                        max={maxCapacity}
+                        value={selectedCount}
+                        onChange={handleSliderChange}
+                        className="people-slider"
+                        style={{
+                            background: `linear-gradient(to right, #0078D7 ${fillPercentage}%, #e0e0e0 ${fillPercentage}%)`
+                        }}
+                    />
+                    <span className="slider-max">{maxCapacity}</span>
+                </div>
+            </div>
+
+            <div className="actions-container">
+                <button className="btn-primary" onClick={handleConfirm}>
                     Продолжить
                 </button>
-
-                <button 
-                    onClick={goBack}
-                    style={{
-                        padding: '10px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--tg-theme-hint-color)',
-                        cursor: 'pointer'
-                    }}
-                >
-                    ← Назад к выбору даты
+                <button className="btn-back" onClick={goBack}>
+                    Назад
                 </button>
             </div>
         </div>

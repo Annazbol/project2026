@@ -1,197 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import './MyBookings.css'
+import './MyBookings.css';
+import { fetchUserBookings } from '../api';
+import { useUser } from '../UserContext.jsx'; 
 
 const tg = window.Telegram?.WebApp;
 
-const MOCK_BOOKINGS = [
-    {
-        id: 1,
-        room_name: '1-207, коворкинг на 2 этаже',
-        building_name: 'Учебный корпус №1, ул. Московская, д. 36',
-        date: '2026-04-05',
-        time_start: '14:00',
-        time_end: '16:00',
-        duration: 120,
-        people_count: 4
-    },
-    {
-        id: 2,
-        room_name: '2-208',
-        building_name: 'Учебный корпус №2, ул. Московская, д. 39',
-        date: '2026-04-06',
-        time_start: '10:00',
-        time_end: '11:30',
-        duration: 90,
-        people_count: 2
-    },
-    {
-        id: 3,
-        room_name: '3-103a',
-        building_name: 'Учебный корпус №3, ул. Московская, д. 29',
-        date: '2026-04-03',
-        time_start: '09:00',
-        time_end: '10:00',
-        duration: 60,
-        people_count: 1
-    },
-    {
-        id: 4,
-        room_name: '1-207',
-        building_name: 'Учебный корпус №4, ул. К. Либкнехта, 76',
-        date: '2026-04-07',
-        time_start: '13:00',
-        time_end: '15:00',
-        duration: 120,
-        people_count: 3
-    },
-    {
-        id: 5,
-        room_name: '5-409',
-        building_name: 'Учебный корпус №5, ул. Карла Маркса, д. 77',
-        date: '2026-04-08',
-        time_start: '11:00',
-        time_end: '12:00',
-        duration: 60,
-        people_count: 2
-    },
-    {
-        id: 6,
-        room_name: '6-411',
-        building_name: 'Учебный корпус №6, Студенческий проезд, д. 9',
-        date: '2026-04-09',
-        time_start: '15:00',
-        time_end: '17:00',
-        duration: 120,
-        people_count: 5
-    },
-    {
-        id: 7,
-        room_name: '7-004',
-        building_name: 'Учебный корпус №7, ул. Преображенская, д. 32',
-        date: '2026-04-10',
-        time_start: '09:30',
-        time_end: '11:00',
-        duration: 90,
-        people_count: 2
-    },
-    {
-        id: 8,
-        room_name: '8-602',
-        building_name: 'Учебный корпус №8, Студенческий проезд, д. 11',
-        date: '2026-04-11',
-        time_start: '14:00',
-        time_end: '15:30',
-        duration: 90,
-        people_count: 3
-    },
-    {
-        id: 9,
-        room_name: '10-204',
-        building_name: 'Учебный корпус №10, ул. Ломоносова, д. 18-a',
-        date: '2026-04-12',
-        time_start: '10:00',
-        time_end: '11:00',
-        duration: 60,
-        people_count: 1
-    },
-    {
-        id: 10,
-        room_name: '11-31',
-        building_name: 'Учебный корпус №11, ул. Преображенская, 41',
-        date: '2026-04-13',
-        time_start: '16:00',
-        time_end: '18:00',
-        duration: 120,
-        people_count: 4
-    },
-    {
-        id: 11,
-        room_name: '13-206',
-        building_name: 'Учебный корпус №13, ул. Красноармейская, д.26',
-        date: '2026-04-14',
-        time_start: '12:00',
-        time_end: '13:30',
-        duration: 90,
-        people_count: 2
-    },
-    {
-        id: 12,
-        room_name: '14-215',
-        building_name: 'Учебный корпус №14, ул. Ленина, д.111',
-        date: '2026-04-15',
-        time_start: '13:00',
-        time_end: '14:00',
-        duration: 60,
-        people_count: 2
-    },
-    {
-        id: 13,
-        room_name: '15-321, коворкинг на 1 этаже',
-        building_name: 'Учебный корпус №15, ул. Ленина, д.198',
-        date: '2026-04-16',
-        time_start: '11:00',
-        time_end: '13:00',
-        duration: 120,
-        people_count: 6
-    },
-    {
-        id: 14,
-        room_name: '16-316, коворкинг на 1 этаже',
-        building_name: 'Учебный корпус №16, ул. Свободы, д.122',
-        date: '2026-04-17',
-        time_start: '14:00',
-        time_end: '16:00',
-        duration: 120,
-        people_count: 4
-    },
-    {
-        id: 15,
-        room_name: '19-105',
-        building_name: 'Учебный корпус №19, ул. Орловская, д.12',
-        date: '2026-04-18',
-        time_start: '09:00',
-        time_end: '10:30',
-        duration: 90,
-        people_count: 2
-    }
+const STATUS_CONFIG = {
+    'создано. ожидается подтверждение администратором': { className: 'status-pending', label: '⏳ Ждёт подтверждения' },
+    'не активна': { className: 'status-soon', label: '📅 Запланировано' },
+    'ожидание подтверждения явки': { className: 'status-warning', label: '⚠️ Подтвердите явку!' },
+    'явка подтверждено пользователем': { className: 'status-active', label: '✓ Явка подтверждена' },
+    'явка полностью подтверждена': { className: 'status-active', label: '✅ Активно' },
+    'неявка': { className: 'status-rejected', label: '❌ Неявка' },
+    'отменено': { className: 'status-cancelled', label: '🚫 Отменено' },
+    'завершена': { className: 'status-expired', label: '✓ Завершено' },
+};
+
+const CANCELLABLE_STATUSES = [
+    'создано. ожидается подтверждение администратором',
+    'не активна',
+    'ожидание подтверждения явки',
+    'явка подтверждено пользователем',
+    'явка полностью подтверждена',
 ];
 
-export default function MyBookings() {
+export default function MyBookings({ onBackToMenu, onOpenBooking, onCancel }) {
+    const { tgId } = useUser();  // 🆕
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [bookings, setBookings] = useState([]);
-    const [cancelModalId, setCancelModalId] = useState(null);
 
     const fetchBookings = async () => {
         try {
             setLoading(true);
             setError(false);
-            
-            // Здесь должен быть реальный API запрос
-            // const response = await fetch('/api/my-bookings', {
-            //     method: 'GET',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         'X-Telegram-Init-Data': tg?.initData || ''
-            //     }
-            // });
-            // const data = await response.json();
-            // setBookings(data.bookings || []);
-            
-            // Временно используем моковые данные
-            setTimeout(() => {
-                setBookings(MOCK_BOOKINGS);
-                setLoading(false);
-            }, 800);
+            const data = await fetchUserBookings(tgId);  // 🆕 tgId из контекста
+
+            const formatted = data.map(item => ({
+                book_id: item.book_id,
+                room_name: item.room?.room_number,
+                date: item.slot_date_backup,
+                time_start: item.start_time_backup,
+                duration: item.duration || 60,
+                people_count: item.num_of_people,
+                status_name: item.status_rel?.name || 'Неизвестно',
+            }));
+
+            setBookings(formatted);
         } catch (err) {
-            console.error('Ошибка:', err);
+            console.error(err);
             setError(true);
+        } finally {
             setLoading(false);
         }
     };
 
-    const goBack = () => {
-        tg?.sendData(JSON.stringify({ action: 'back', step: 'my_bookings' }));
+    const handleCancelClick = async (bookingId, e) => {
+        e.stopPropagation();
+        try {
+            await onCancel(bookingId);
+            await fetchBookings();
+        } catch (err) {}
+    };
+
+    const changeBooking = (bookingId, e) => {
+        e.stopPropagation();
+        tg?.sendData(JSON.stringify({ action: 'change_booking', booking_id: bookingId }));
         tg?.close();
     };
 
@@ -200,77 +74,44 @@ export default function MyBookings() {
         tg?.close();
     };
 
-    const cancelBooking = (bookingId) => {
-        tg?.sendData(JSON.stringify({
-            action: 'cancel_booking',
-            booking_id: bookingId
-        }));
-        tg?.close();
+    const getStatusConfig = (statusName) => {
+        const key = (statusName || '').toLowerCase().trim();
+        return STATUS_CONFIG[key] || { className: 'status-default', label: statusName || 'Неизвестно' };
     };
 
-    const changeBooking = (bookingId) => {
-        tg?.sendData(JSON.stringify({
-            action: 'change_booking',
-            booking_id: bookingId
-        }));
-        tg?.close();
+    const canCancelBooking = (statusName) => {
+        const key = (statusName || '').toLowerCase().trim();
+        return CANCELLABLE_STATUSES.includes(key);
     };
 
-    const getBookingStatus = (date, timeStart, duration) => {
-        const now = new Date();
-        const bookingStart = new Date(`${date}T${timeStart}`);
-        const bookingEnd = new Date(bookingStart.getTime() + duration * 60000);
-        
-        if (bookingEnd < now) {
-            return { type: 'expired', label: 'Завершено', className: 'status-expired' };
-        } else if (bookingStart <= now && bookingEnd > now) {
-            return { type: 'active', label: 'Активно сейчас', className: 'status-active' };
-        } else {
-            return { type: 'soon', label: 'Предстоящее', className: 'status-soon' };
-        }
-    };
+    const formatDate = (s) => new Date(s).toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'long', weekday: 'short'
+    });
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU', {
-            day: 'numeric',
-            month: 'long',
-            weekday: 'short'
-        });
-    };
+    const formatTime = (t) => t?.substring(0, 5) || '';
 
-    const formatTime = (timeString) => {
-        return timeString?.substring(0, 5) || '';
-    };
-
-    const formatDuration = (minutes) => {
-        if (minutes < 60) return `${minutes} мин`;
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`;
+    const formatDuration = (m) => {
+        if (m < 60) return `${m} мин`;
+        const h = Math.floor(m / 60);
+        const mm = m % 60;
+        return mm ? `${h} ч ${mm} мин` : `${h} ч`;
     };
 
     useEffect(() => {
         if (tg) {
             tg.expand();
-            tg.setHeaderColor('bg_color');
-            tg.setBackgroundColor('bg_color');
-            tg.BackButton.show();
-            tg.BackButton.onClick(goBack);
+            tg?.BackButton?.show();
+            tg?.BackButton?.onClick(onBackToMenu);
         }
-        
         fetchBookings();
-
-        return () => {
-            tg?.BackButton.offClick(goBack);
-        };
-    }, []);
+        return () => tg?.BackButton?.offClick(onBackToMenu);
+    }, [onBackToMenu, tgId]);
 
     if (loading) {
         return (
             <div className="loading-state">
                 <div className="spinner"></div>
-                <p>Загрузка ваших бронирований...</p>
+                <p>Загрузка бронирований...</p>
             </div>
         );
     }
@@ -278,10 +119,8 @@ export default function MyBookings() {
     if (error) {
         return (
             <div className="error-state">
-                <p>⚠️ Не удалось загрузить бронирования</p>
-                <button className="btn-book" onClick={fetchBookings}>
-                    Повторить
-                </button>
+                <p>⚠️ Ошибка при загрузке данных</p>
+                <button className="btn-book" onClick={fetchBookings}>Повторить</button>
             </div>
         );
     }
@@ -290,70 +129,53 @@ export default function MyBookings() {
         <div className="container">
             <div className="header">
                 <h1>Мои бронирования</h1>
-                <p className="subtitle">Управление активными бронями комнат отдыха</p>
+                <p className="subtitle">Список ваших текущих и прошедших записей</p>
             </div>
 
             {bookings.length === 0 ? (
                 <div className="empty-state">
                     <div className="empty-icon">📭</div>
-                    <div className="empty-title">Нет активных броней</div>
-                    <div className="empty-text">У вас пока нет ни одного бронирования</div>
-                    <button className="btn-book" onClick={bookNow}>
-                        Забронировать сейчас
-                    </button>
+                    <div className="empty-title">У вас пока нет бронирований</div>
+                    <div className="empty-text">Выберите подходящую комнату и время.</div>
+                    <button className="btn-book" onClick={bookNow}>Забронировать сейчас</button>
                 </div>
             ) : (
                 <>
                     <div className="counter-card">
-                        <span className="counter-label">Активных броней</span>
+                        <span className="counter-label">Всего бронирований:</span>
                         <span className="counter-value">{bookings.length}</span>
                     </div>
 
                     <div className="bookings-list">
-                        {bookings.map((booking) => {
-                            const status = getBookingStatus(booking.date, booking.time_start, booking.duration);
+                        {bookings.map((b) => {
+                            const statusConfig = getStatusConfig(b.status_name);
+                            const showActions = canCancelBooking(b.status_name);
+
                             return (
-                                <div key={booking.id} className="booking-card">
-                                    <div className={`booking-status ${status.className}`}>
-                                        {status.label}
+                                <div key={b.book_id} className="booking-card" onClick={() => onOpenBooking(b)}>
+                                    <div className={`booking-status ${statusConfig.className}`}>
+                                        {statusConfig.label}
                                     </div>
+
                                     <div className="booking-body">
-                                        <div className="booking-room">
-                                            🪑 {booking.room_name}
-                                        </div>
-                                        <div className="booking-building">
-                                            📍 {booking.building_name}
-                                        </div>
-                                        
+                                        <div className="booking-room">🪑 Комната {b.room_name}</div>
                                         <div className="booking-details">
-                                            <div className="detail-item">
-                                                <span className="detail-icon">📅</span>
-                                                <span>{formatDate(booking.date)}</span>
-                                            </div>
-                                            <div className="detail-item">
-                                                <span className="detail-icon">⏰</span>
-                                                <span>
-                                                    {formatTime(booking.time_start)} – {formatTime(booking.time_end)}
-                                                </span>
-                                            </div>
-                                            <div className="detail-item">
-                                                <span className="detail-icon">⏱️</span>
-                                                <span>{formatDuration(booking.duration)}</span>
-                                            </div>
+                                            <div className="detail-item">📅 {formatDate(b.date)}</div>
+                                            <div className="detail-item">⏰ {formatTime(b.time_start)}</div>
+                                            <div className="detail-item">⏱️ {formatDuration(b.duration)}</div>
                                         </div>
-                                        
-                                        <div className="booking-people">
-                                            👥 {booking.people_count} человек
-                                        </div>
-                                        
-                                        <div className="booking-actions">
-                                            <button className="btn-cancel" onClick={() => setCancelModalId(booking.id)}>
-                                                Отменить
-                                            </button>
-                                            <button className="btn-change" onClick={() => changeBooking(booking.id)}>
-                                                Изменить
-                                            </button>
-                                        </div>
+                                        <div className="booking-people">👥 {b.people_count} чел.</div>
+
+                                        {showActions && (
+                                            <div className="booking-actions">
+                                                <button className="btn-cancel" onClick={(e) => handleCancelClick(b.book_id, e)}>
+                                                    Отменить
+                                                </button>
+                                                <button className="btn-change" onClick={(e) => changeBooking(b.book_id, e)}>
+                                                    Изменить
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -362,26 +184,7 @@ export default function MyBookings() {
                 </>
             )}
 
-            <button className="btn-back" onClick={goBack}>← Назад</button>
-
-            {cancelModalId && (
-                <div className="modal">
-                    <div className="modal-content">
-                        <div className="modal-title">Отмена бронирования</div>
-                        <div className="modal-text">
-                            Вы уверены, что хотите отменить это бронирование?
-                        </div>
-                        <div className="modal-buttons">
-                            <button className="modal-btn modal-cancel" onClick={() => setCancelModalId(null)}>
-                                Нет, назад
-                            </button>
-                            <button className="modal-btn modal-confirm" onClick={() => cancelBooking(cancelModalId)}>
-                                Да, отменить
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <button className="btn-back" onClick={onBackToMenu}>Назад</button>
         </div>
     );
 }

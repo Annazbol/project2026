@@ -5,7 +5,9 @@ from typing import Any
 import yaml
 
 
-LOCALES_DIR = os.path.join(os.path.dirname(__file__), "locales")
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.dirname(current_dir)
+LOCALES_DIR = os.path.join(parent_dir, "locales")
 DEFAULT_LANG = "ru"
 
 
@@ -38,4 +40,5 @@ def t(key: str, lang: str = DEFAULT_LANG, **kwargs) -> str:
             value = value.format(**kwargs)
         except (KeyError, AttributeError):
             pass
+    print(f"DEBUG: Путь к локалям: {LOCALES_DIR}")
     return str(value)

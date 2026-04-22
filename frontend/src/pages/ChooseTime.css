@@ -1,0 +1,235 @@
+/* === Контейнер === */
+.time-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: 100px; /* Под sticky-футер */
+    background: var(--tg-theme-bg-color, #fff);
+    color: var(--tg-theme-text-color, #000);
+}
+
+/* === Заголовок === */
+.time-header {
+    padding: 20px 16px 12px;
+}
+
+.time-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.time-subtitle {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color, #999);
+    text-transform: capitalize;
+}
+
+/* === Превью выбранного === */
+.selected-preview {
+    margin: 0 16px 16px;
+    padding: 18px;
+    background: linear-gradient(135deg, #b367ff, #7F49B4);
+    border-radius: 16px;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.selected-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+.selected-time {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.time-big {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.time-separator {
+    font-size: 22px;
+    opacity: 0.7;
+}
+
+.time-end {
+    font-size: 22px;
+    font-weight: 600;
+    opacity: 0.95;
+}
+
+.selected-duration {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* === Секции (Утро/День/Вечер) === */
+.time-section {
+    margin-bottom: 24px;
+    padding: 0 16px;
+}
+
+.section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 4px;
+}
+
+.section-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #000);
+}
+
+.section-range {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color, #999);
+}
+
+/* === Сетка слотов === */
+.time-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+}
+
+.slot-btn {
+    padding: 14px 8px;
+    background: var(--tg-theme-secondary-bg-color, #f0f3f7);
+    color: var(--tg-theme-text-color, #000);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.slot-btn:hover {
+    background: #e5e9ef;
+}
+
+.slot-btn:active {
+    transform: scale(0.96);
+}
+
+.slot-btn.active {
+    background: #7F49B4;
+    color: #fff;
+    border-color: #633b8b;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* === Skeleton-загрузка === */
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    padding: 0 16px;
+}
+
+.skeleton-slot {
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #f0f3f7 25%, #e5e9ef 50%, #f0f3f7 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* === Пустое состояние === */
+.empty-slots {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 56px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.empty-text {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color, #999);
+}
+
+/* === Sticky-футер === */
+.actions-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 12px; /* Расстояние между кнопками */
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    background: var(--tg-theme-bg-color, #fff);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+/* Кнопка "Назад" */
+.btn-back {
+    flex: 1; /* Равноразмерность */
+    padding: 14px;
+    background: var(--tg-theme-secondary-bg-color, #f0f3f7);
+    color: var(--tg-theme-text-color, #000);
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+/* Кнопка "Подтвердить" */
+.btn-primary.confirm-btn {
+    flex: 1; /* Равноразмерность */
+    padding: 14px;
+    background: #141414;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-back:active, .btn-primary.confirm-btn:not(:disabled):active {
+    opacity: 0.7;
+    transform: scale(0.98);
+}

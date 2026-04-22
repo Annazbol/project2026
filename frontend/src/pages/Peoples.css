@@ -1,0 +1,173 @@
+.peoples-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--tg-theme-bg-color, #f8f9fc);
+    color: var(--tg-theme-text-color, #1a1a2e);
+    padding: 24px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* === Заголовок === */
+.header-block {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.peoples-container h2 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: var(--tg-theme-hint-color, #888);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* === Блок слайдера === */
+.slider-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+/* === Отображение числа === */
+.count-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+    animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.count-number {
+    font-size: 72px;
+    font-weight: 800;
+    color: #0078D7;
+    line-height: 1;
+    margin-bottom: 4px;
+    text-shadow: 0 4px 12px rgba(0, 120, 215, 0.2);
+}
+
+.count-label {
+    font-size: 18px;
+    color: var(--tg-theme-hint-color, #666);
+    font-weight: 500;
+}
+
+/* === Контейнер ползунка === */
+.slider-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 16px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.slider-min, .slider-max {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tg-theme-hint-color, #888);
+    min-width: 20px;
+    text-align: center;
+}
+
+/* === Кастомный инпут типа Range === */
+.people-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 6px;
+    outline: none;
+    margin: 0;
+    transition: background 0.1s ease;
+}
+
+/* Шарик ползунка (WebKit: Chrome, Safari, Telegram WebApp) */
+.people-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #0078D7;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.people-slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(0, 120, 215, 0.3);
+}
+
+/* Шарик ползунка (Firefox) */
+.people-slider::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #0078D7;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+/* === Кнопки внизу === */
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto; /* Прижимает кнопки к низу экрана */
+}
+
+.btn-primary {
+    background-color: #0078D7;
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-back {
+    padding: 14px;
+    font-size: 15px;
+    background: var(--tg-theme-secondary-bg-color, #e5e9ef);
+    border: none;
+    border-radius: 12px;
+    color: var(--tg-theme-text-color, #1a1a2e);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-back:active {
+    background: var(--tg-theme-hint-color, #d0d4db);
+    transform: scale(0.98);
+}
+
+.loader {
+    text-align: center;
+    padding: 40px;
+    color: var(--tg-theme-hint-color, #888);
+    font-size: 15px;
+}

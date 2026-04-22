@@ -1,268 +1,187 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Для кнопки Назад
 import './BookingDetails.css';
 
 const tg = window.Telegram?.WebApp;
 
-// Вспомогательные функции
-const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-};
+export default function BookingDetails({ booking, goBack, onCancel }) {
+    if (!booking) {
+        return <div className="error-screen">Данные о бронировании не найдены</div>;
+    }
 
-const formatDateTime = (dateTimeStr) => {
-    return new Date(dateTimeStr).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-};
+    const room = booking.room;
+    const building = room?.building;
+    const photo = room?.preview_photo || "/no-image.png";
 
-const calculateNights = (checkIn, checkOut) => {
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-    return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-};
-
-const getNightText = (nights) => {
-    if (nights % 10 === 1 && nights % 100 !== 11) return `${nights} ночь`;
-    if ([2,3,4].includes(nights % 10) && ![12,13,14].includes(nights % 100)) return `${nights} ночи`;
-    return `${nights} ночей`;
-};
-
-const getGuestText = (guests) => {
-    if (guests === 1) return 'гость';
-    if (guests <= 4) return 'гостя';
-    return 'гостей';
-};
-
-const getStatusInfo = (status) => {
-    const map = {
-        active: { text: "Активна 🟢", className: "status-active" },
-        pending: { text: "Ожидает подтверждения ⏳", className: "status-pending" },
-        cancelled: { text: "Отменена 🔴", className: "status-cancelled" },
-        completed: { text: "Завершена 🏁", className: "status-completed" }
-    };
-    return map[status] || map.active;
-};
-
-// Моковые данные (В реальном проекте будешь загружать через API по ID из параметров)
-const initialBookingData = {
-    id: "VYATSU-20260401-001",
-    room: {
-        id: 2, name: "Панорама «Вятка»", building: "Корпус №2", roomNumber: "217", capacity: 3,
-        description: "Просторная комната с панорамным видом на набережную. Удобные диваны, кофемашина, кондиционер.",
-        imageUrl: null 
-    },
-    checkIn: "2026-04-10", checkOut: "2026-04-12",
-    checkInTime: "14:00", checkOutTime: "12:00",
-    guests: 2,
-    status: "pending", // active, pending, cancelled, completed
-    createdAt: "2026-03-25T10:30:00",
-    user: { name: "Иван Студент", role: "admin" } // Поменяй на 'user' для теста
-};
-
-
-export default function BookingDetails() {
-    const navigate = useNavigate();
-    
-    // Состояния
-    const [booking, setBooking] = useState(initialBookingData);
-    const [userRole, setUserRole] = useState(initialBookingData.user.role);
-
-    useEffect(() => {
-        if (tg) {
-            tg.expand();
-            tg.enableClosingConfirmation();
-            tg.MainButton.hide(); // Скрываем кнопку ТГ, так как у нас свои кнопки
-        }
-    }, []);
-
-    // Обработчики действий
-    const handleBack = () => {
-        if (tg) tg.HapticFeedback.impactOccurred('light');
-        navigate(-1); // Возврат на предыдущую страницу React
-    };
-
-    const handleEdit = () => {
-        tg?.showPopup({
-            title: '✏️ Изменение брони',
-            message: `Изменить бронь ${booking.id}? Вы будете перенаправлены на форму редактирования.`,
-            buttons: [
-                { id: 'cancel', type: 'cancel', text: 'Отмена' },
-                { id: 'confirm', type: 'default', text: 'Изменить' }
-            ]
-        }, (btnId) => {
-            if (btnId === 'confirm') {
-                if (tg) tg.HapticFeedback.impactOccurred('light');
-                alert("Переход к редактированию..."); // Здесь можно сделать navigate()
-            }
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "—";
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            weekday: 'short'
         });
     };
 
-    const handleCancel = () => {
-        tg?.showPopup({
-            title: '❌ Отмена бронирования',
-            message: `Вы уверены, что хотите отменить бронь ${booking.id}?`,
-            buttons: [
-                { id: 'cancel', type: 'cancel', text: 'Назад' },
-                { id: 'confirm', type: 'destructive', text: 'Отменить' }
-            ]
-        }, (btnId) => {
-            if (btnId === 'confirm') {
-                if (tg) tg.HapticFeedback.notificationOccurred('warning');
-                setBooking(prev => ({ ...prev, status: 'cancelled' }));
-                tg?.sendData(JSON.stringify({ action: 'cancel_booking', bookingId: booking.id }));
+    const formatTime = (timeStr) => {
+        if (!timeStr) return "—";
+        const [h, m] = timeStr.split(':');
+        return `${h}:${m}`;
+    };
+
+    const parseDurationToMinutes = (duration) => {
+        if (!duration) return 0;
+        if (typeof duration === 'number') return duration;
+
+        if (typeof duration === 'string') {
+            if (duration.includes(':')) {
+                const [h, m] = duration.split(':').map(Number);
+                return (h || 0) * 60 + (m || 0);
             }
-        });
-    };
-
-    const handleConfirm = () => {
-        tg?.showPopup({
-            title: '✅ Подтверждение брони',
-            message: `Подтвердить бронь ${booking.id} для ${booking.user.name}?`,
-            buttons: [
-                { id: 'cancel', type: 'cancel', text: 'Отмена' },
-                { id: 'confirm', type: 'default', text: 'Подтвердить' }
-            ]
-        }, (btnId) => {
-            if (btnId === 'confirm') {
-                if (tg) tg.HapticFeedback.notificationOccurred('success');
-                setBooking(prev => ({ ...prev, status: 'active' }));
-                tg?.sendData(JSON.stringify({ action: 'confirm_booking', bookingId: booking.id }));
+            if (duration.startsWith('PT')) {
+                const h = parseInt(duration.match(/(\d+)H/)?.[1] || 0, 10);
+                const m = parseInt(duration.match(/(\d+)M/)?.[1] || 0, 10);
+                return h * 60 + m;
             }
-        });
+            return parseInt(duration, 10) || 0;
+        }
+        return 0;
     };
 
-    const handleReject = () => {
-        tg?.showPopup({
-            title: '🚫 Отклонение брони',
-            message: `Вы уверены, что хотите отклонить бронь ${booking.id}?`,
-            buttons: [
-                { id: 'cancel', type: 'cancel', text: 'Назад' },
-                { id: 'confirm', type: 'destructive', text: 'Отклонить' }
-            ]
-        }, (btnId) => {
-            if (btnId === 'confirm') {
-                if (tg) tg.HapticFeedback.notificationOccurred('error');
-                setBooking(prev => ({ ...prev, status: 'cancelled' }));
-                tg?.sendData(JSON.stringify({ action: 'reject_booking', bookingId: booking.id }));
-            }
-        });
+    const formatDuration = (duration) => {
+        const minutes = parseDurationToMinutes(duration);
+        if (minutes <= 0) return "—";
+
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+
+        if (h > 0 && m > 0) return `${h} ч ${m} мин`;
+        if (h > 0) return `${h} ч`;
+        return `${m} мин`;
     };
 
-    // Отрисовка кнопок в зависимости от роли и статуса
-    const renderActionButtons = () => {
-        const isActive = booking.status === 'active';
-        const isPending = booking.status === 'pending';
-        const isAdmin = userRole === 'admin';
-        const isUser = userRole === 'user';
+    const getEndTime = () => {
+        if (!booking.start_time_backup || !booking.duration) return null;
 
-        if (isUser && isActive) {
-            return (
-                <div className="bd-actions">
-                    <button className="bd-btn btn-secondary" onClick={handleEdit}>✏️ Изменить</button>
-                    <button className="bd-btn btn-danger" onClick={handleCancel}>❌ Отменить</button>
-                </div>
-            );
-        }
-        
-        if (isAdmin && isPending) {
-            return (
-                <div className="bd-actions">
-                    <button className="bd-btn btn-primary" onClick={handleConfirm}>✅ Подтвердить</button>
-                    <button className="bd-btn btn-danger" onClick={handleReject}>🚫 Отклонить</button>
-                </div>
-            );
-        }
-        
-        if (isAdmin && isActive) {
-            return (
-                <div className="bd-actions">
-                    <button className="bd-btn btn-secondary" onClick={handleEdit}>✏️ Изменить</button>
-                    <button className="bd-btn btn-danger" onClick={handleCancel}>❌ Отменить</button>
-                </div>
-            );
-        }
+        const [h, m] = booking.start_time_backup.split(':').map(Number);
+        const durationMinutes = parseDurationToMinutes(booking.duration);
 
-        // Для completed или cancelled
-        return (
-            <div className="bd-actions">
-                <button className="bd-btn btn-secondary" onClick={handleBack}>🔙 Закрыть</button>
-            </div>
-        );
+        const date = new Date();
+        date.setHours(h);
+        date.setMinutes(m);
+        date.setSeconds(0);
+        date.setMinutes(date.getMinutes() + durationMinutes);
+
+        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     };
 
-    const nights = calculateNights(booking.checkIn, booking.checkOut);
-    const statusInfo = getStatusInfo(booking.status);
+    const handleChange = () => {
+        tg?.sendData(JSON.stringify({
+            action: 'change_booking',
+            booking_id: booking.book_id
+        }));
+        tg?.close();
+    };
+
+    // 🆕 Проверяем, можно ли отменить бронь
+    const canCancel = () => {
+        if (!booking.slot_date_backup || !booking.start_time_backup) return false;
+        const start = new Date(`${booking.slot_date_backup}T${booking.start_time_backup}`);
+        return start > new Date(); // Можно отменить только будущие
+    };
+
+    const statusName = booking.status_rel?.name || "Неизвестно";
+    const statusClass = `status-${(statusName || '').toLowerCase().replace(/\s/g, '-')}`;
 
     return (
         <div className="booking-details-container">
-            <div className="booking-details-wrapper">
-                <div className="back-button" onClick={handleBack}>←</div>
-                
-                <div className="bd-header">
-                    <div className="bd-logo">ВятГУ · Детали</div>
-                </div>
+            {/* Фото и статус */}
+            <div className="booking-photo-wrapper">
+                <img src={photo} alt="Room" className="booking-photo" />
+                <div className={`status-badge ${statusClass}`}>{statusName}</div>
+            </div>
 
-                {/* Карточка 1: Основная информация */}
-                <div className="info-card">
-                    <div className="room-image">
-                        {booking.room.imageUrl ? (
-                            <img src={booking.room.imageUrl} alt={booking.room.name} />
-                        ) : (
-                            <div className="image-placeholder">
-                                <span>📸</span>
-                            </div>
-                        )}
+            {/* Заголовок */}
+            <div className="booking-header">
+                <h1>Комната №{room?.room_number}</h1>
+                {building && (
+                    <div className="building-info">
+                        <span className="icon">📍</span>
+                        <div>
+                            <div className="building-name">{building.name}</div>
+                            <div className="building-address">{building.address}</div>
+                        </div>
                     </div>
-                    
-                    <div className={`status-badge ${statusInfo.className}`}>
-                        {statusInfo.text}
-                    </div>
-                    
-                    <div className="room-name">{booking.room.name}</div>
-                    
-                    <div className="location-info">
-                        <div className="location-item">🏢 {booking.room.building}</div>
-                        <div className="location-item">🚪 Каб. {booking.room.roomNumber}</div>
-                        <div className="location-item">👥 до {booking.room.capacity} чел.</div>
-                    </div>
-                    
-                    <div className="room-description">
-                        {booking.room.description}
-                    </div>
-                </div>
+                )}
+            </div>
 
-                {/* Карточка 2: Детали времени */}
-                <div className="info-card">
-                    <div className="info-title">📋 Детали бронирования</div>
-                    
-                    <div className="detail-row">
-                        <span className="detail-label">📅 Заезд</span>
-                        <span className="detail-value">{formatDate(booking.checkIn)} в {booking.checkInTime}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">⏳ Длительность</span>
-                        <span className="detail-value">{nights} {getNightText(nights)}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">👥 Количество человек</span>
-                        <span className="detail-value">{booking.guests} {getGuestText(booking.guests)}</span>
+            {/* Теги */}
+            {room?.tags && room.tags.length > 0 && (
+                <div className="booking-tags">
+                    {room.tags.map((tag, idx) => (
+                        <span key={idx} className="tag">{tag}</span>
+                    ))}
+                </div>
+            )}
+
+            {/* Карточка информации */}
+            <div className="booking-info-card">
+                <div className="info-row">
+                    <div className="info-icon">📅</div>
+                    <div className="info-content">
+                        <div className="info-label">Дата</div>
+                        <div className="info-value">{formatDate(booking.slot_date_backup)}</div>
                     </div>
                 </div>
 
-                {/* Карточка 3: Инфа о госте */}
-                <div className="info-card">
-                    <div className="info-title">👤 Информация о госте</div>
-                    
-                    <div className="detail-row">
-                        <span className="detail-label">Имя</span>
-                        <span className="detail-value">{booking.user.name}</span>
+                <div className="info-divider" />
+
+                <div className="info-row">
+                    <div className="info-icon">🕐</div>
+                    <div className="info-content">
+                        <div className="info-label">Время</div>
+                        <div className="info-value">
+                            {formatTime(booking.start_time_backup)}
+                            {getEndTime() && <span className="time-end"> – {getEndTime()}</span>}
+                        </div>
                     </div>
-                    <div className="detail-row">
-                        <span className="detail-label">🕒 Создано</span>
-                        <span className="detail-value">{formatDateTime(booking.createdAt)}</span>
-                    </div>	
                 </div>
 
-                {/* Динамические кнопки */}
-                {renderActionButtons()}
+                <div className="info-divider" />
+
+                <div className="info-row">
+                    <div className="info-icon">⏱</div>
+                    <div className="info-content">
+                        <div className="info-label">Длительность</div>
+                        <div className="info-value">{formatDuration(booking.duration)}</div>
+                    </div>
+                </div>
+
+                <div className="info-divider" />
+
+                <div className="info-row">
+                    <div className="info-icon">👥</div>
+                    <div className="info-content">
+                        <div className="info-label">Гостей</div>
+                        <div className="info-value">{booking.num_of_people} чел.</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Кнопки */}
+            <div className="booking-actions">
+                {canCancel() && (
+                    <>
+                        <button className="btn-edit-booking" onClick={handleChange}>
+                            Изменить бронирование
+                        </button>
+                        <button className="btn-cancel-booking" onClick={onCancel}>
+                            Отменить бронирование
+                        </button>
+                    </>
+                )}
+                <button className="btn-back" onClick={goBack}>
+                    Назад
+                </button>
             </div>
         </div>
     );

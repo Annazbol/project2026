@@ -1,109 +1,121 @@
 import React, { useEffect, useState } from 'react';
+import './RoomList.css';
 import { fetchRooms } from '../api';
-import './RoomList.css'; // Импортируем вашу функцию
+import { useUser } from '../UserContext.jsx';
 
 const tg = window.Telegram?.WebApp;
 
-const RoomList = ({ onSelectRoom }) => {
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
+const RoomList = ({ onSelectRoom, goBack, onCreateRoom }) => {
+    const [rooms, setRooms] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { user } = useUser();
 
-  useEffect(() => {
-    // Загружаем данные с вашего FastAPI
-    const loadRooms = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchRooms();
-        // Приводим данные к удобному для фронтенда виду
-        const formattedRooms = data.map(r => ({
-          id: r.id_room,
-          number: r.room_number,
-          description: r.description || "Уютный коворкинг для работы и учебы",
-          image: r.image_url || "https://via.placeholder.com/300x180?text=VyatSU+Room"
-        }));
-        setRooms(formattedRooms);
-      } catch (error) {
-        console.error("Ошибка загрузки комнат:", error);
-      } finally {
-        setLoading(false);
-      }
+    useEffect(() => {
+        const loadRooms = async () => {
+            try {
+                setLoading(true);
+                const data = await fetchRooms();
+                setRooms(data?.data || data || []);
+            } catch (e) {
+                console.error(e);
+                setRooms([]);
+                tg?.showAlert("Ошибка при загрузке списка комнат");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadRooms();
+        tg?.expand();
+
+        // 🆕 Включаем нативную кнопку "Назад" в Telegram
+        if (tg?.BackButton) {
+            tg.BackButton.show();
+            tg.BackButton.onClick(goBack);
+        }
+
+        // Выключаем при уходе со страницы
+        return () => {
+            if (tg?.BackButton) {
+                tg.BackButton.offClick(goBack);
+                tg.BackButton.hide();
+            }
+        };
+    }, [goBack]);
+
+    const handleSelect = (room) => {
+        tg?.HapticFeedback?.impactOccurred('light');
+        onSelectRoom?.(room);
     };
 
-    loadRooms();
-    tg?.expand();
-  }, []);
-
-  const handleSelect = (room) => {
-    tg?.HapticFeedback.impactOccurred('light');
-    // Передаем и ID, и номер, чтобы в конце показать "Вы забронировали Кабинет 101"
-    if (onSelectRoom) onSelectRoom(room.id, room.number);
-  };
-
-  if (loading) {
-    return <div style={{ textAlign: 'center', padding: '50px', color: 'var(--tg-theme-hint-color)' }}>Загрузка кабинетов...</div>;
-  }
-
-  return (
-    <div style={{ padding: '16px', backgroundColor: 'var(--tg-theme-bg-color)' }}>
-      <h2 style={{ color: 'var(--tg-theme-text-color)', marginBottom: '20px' }}>Выберите кабинет</h2>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-        {rooms.map((room) => (
-          <div
-            key={room.id}
-            onClick={() => handleSelect(room)}
-            style={{
-              background: 'var(--tg-theme-secondary-bg-color)',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              cursor: 'pointer',
-              border: '1px solid rgba(0,0,0,0.05)',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
-            }}
-          >
-            <img 
-              src={room.image} 
-              alt={room.number} 
-              style={{ width: '100%', height: '160px', objectFit: 'cover' }} 
-            />
-            <div style={{ padding: '15px' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '8px'
-              }}>
-                <span style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold', 
-                  color: 'var(--tg-theme-text-color)' 
-                }}>
-                  Кабинет {room.number}
-                </span>
-                <span style={{ 
-                  backgroundColor: 'var(--tg-theme-button-color)', 
-                  color: 'var(--tg-theme-button-text-color)',
-                  padding: '4px 12px',
-                  borderRadius: '10px',
-                  fontSize: '12px'
-                }}>
-                  Свободен
-                </span>
-              </div>
-              <p style={{ 
-                fontSize: '14px', 
-                color: 'var(--tg-theme-hint-color)', 
-                margin: 0,
-                lineHeight: '1.4' 
-              }}>
-                {room.description}
-              </p>
+    if (loading) {
+        return (
+            <div className="room-list-loading">
+                Загрузка комнат...
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+        );
+    }
+
+    if (rooms.length === 0) {
+        return (
+            <div className="room-list-empty">
+                Свободных комнат не найдено
+                {/* Кнопка назад для пустого экрана */}
+                <button className="btn-back" onClick={goBack} style={{marginTop: '20px'}}>
+                    Назад в меню
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="room-list-container">
+            <div className="room-list-header">
+                <h1>Все комнаты</h1>
+            </div>
+
+            <div className="rooms-grid">
+                {rooms.map((room) => (
+                    <button
+                        key={room.id_room}
+                        className="room-card"
+                        onClick={() => handleSelect(room)}
+                    >
+                        <img
+                            src={room.preview_photo || "/no-image.png"}
+                            alt={`Комната ${room.room_number}`}
+                            className="room-image"
+                        />
+
+                        <div className="room-info">
+                            <span className="room-number">
+                                №{room.room_number}
+                            </span>
+
+                            <p className="room-description">
+                                Вместимость: {room.capacity} чел.
+                            </p>
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            {/* 🆕 Добавлен футер с кнопкой назад */}
+            <div className="actions-footer">
+                {user?.administrator && (
+                    <button className="btn-admin-add" onClick={onCreateRoom}>
+                        ➕ Добавить
+                    </button>
+                )}
+                <button className="btn-back" onClick={() => {
+                    tg?.HapticFeedback?.impactOccurred('light');
+                    goBack();
+                }}>
+                    Назад
+                </button>
+            </div>
+        </div>
+    );
 };
 
 export default RoomList;

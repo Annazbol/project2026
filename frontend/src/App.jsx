@@ -1,132 +1,322 @@
 import React, { useState, useEffect } from 'react';
-import MainMenu from './pages/MainMenu';
-import RoomList from './pages/RoomList';
-import DatePicker from './pages/DatePicker';
-import Peoples from './pages/Peoples';
-import ChooseTime from './pages/ChooseTime';
-import DurationPicker from './pages/DurationPicker';
+import MainMenu from './pages/MainMenu.jsx';
+import RoomList from './pages/RoomList.jsx';
+import DatePicker from './pages/DatePicker.jsx';
+import Peoples from './pages/Peoples.jsx';
+import ChooseTime from './pages/ChooseTime.jsx';
+import DurationPicker from './pages/DurationPicker.jsx';
+import MyBookings from './pages/MyBookings.jsx';
+import BookingParams from './pages/BookingParameters.jsx';
+import ChooseRoom from './pages/ChooseRoom.jsx';
+import RoomDetails from './pages/RoomDetails.jsx';
+import BookingDetails from './pages/BookDescription.jsx';
+import AdminBookings from './pages/AdminBookings.jsx';
+import CreateRoom from './pages/CreateRoom.jsx';
+import { createBooking, fetchBookingDetails, cancelBooking, fetchRoomById } from './api';
+import { useUser } from './UserContext.jsx';
 
-const tg = window.Telegram?.WebApp;
+const tg = window.Telegram?.WebApp || {
+    ready: () => {},
+    expand: () => {},
+    showAlert: (msg) => alert(msg),
+    showConfirm: (msg, cb) => cb(window.confirm(msg)),
+    HapticFeedback: { notificationOccurred: () => {} },
+    initData: '',
+    initDataUnsafe: { user: { id: 12345 } }
+};
 
 function App() {
-  const [step, setStep] = useState('menu'); 
+    const { user, loading: userLoading, error: userError, tgId } = useUser();  // 🆕
+    
+    const [step, setStep] = useState('menu');
+    const [bookingData, setBookingData] = useState({
+        room_id: null,
+        booking_date: null,
+        people_count: 1,
+        start_time: null,
+        duration_minutes: 30
+    });
+    const [selectedRoomId, setSelectedRoomId] = useState(null);
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [editingRoom, setEditingRoom] = useState(null);
 
-  const [bookingData, setBookingData] = useState({
-    roomId: null,
-    roomName: '',
-    date: null,
-    num_of_people: 1,
-    startTime: null,
-    duration: 60
-  });
+    useEffect(() => {
+        tg?.ready();
+        tg?.expand();
+    }, []);
 
-  useEffect(() => {
-    tg?.ready();
-    tg?.expand();
-  }, []);
+    // 🆕 Экраны загрузки и ошибки авторизации
+    if (userLoading) {
+        return (
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                minHeight: '100vh',
+                color: 'var(--tg-theme-hint-color)'
+            }}>
+                <div>⏳ Загрузка...</div>
+            </div>
+        );
+    }
 
-  const handleSelectRoom = (roomId, roomNumber) => {
-    setBookingData({ ...bookingData, roomId, roomName: roomNumber });
-    setStep('date');
-  };
+    if (userError || !user) {
+        return (
+            <div style={{ 
+                padding: '40px 20px', 
+                textAlign: 'center',
+                color: 'var(--tg-theme-text-color)'
+            }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+                <h2>Требуется авторизация</h2>
+                <p style={{ color: 'var(--tg-theme-hint-color)', marginTop: '12px' }}>
+                    Сначала привяжите свой Telegram-аккаунт через бота.
+                </p>
+                <p style={{ marginTop: '8px', fontSize: '13px', color: '#888' }}>
+                    {userError || 'Пользователь не найден'}
+                </p>
+            </div>
+        );
+    }
 
-  const handleSelectDate = (date) => {
-    setBookingData({ ...bookingData, date });
-    setStep('people');
-  };
+    // ============================================
+    // ОБРАБОТЧИКИ
+    // ============================================
 
- const handleSelectPeople = (count) => {
-  setBookingData({ ...bookingData, num_of_people: count });
-  setStep('duration');
-};
-
-const handleSelectDuration = (minutes) => {
-  setBookingData({ ...bookingData, duration: minutes });
-  setStep('time');
-};
-
-  const handleSelectTime = (timeSlot) => {
-    setBookingData({ ...bookingData, startTime: timeSlot.start });
-    setStep('duration');
-  };
-
-  const handleFinalBook = async () => {
-  try {
-    const finalData = {
-      user_id: tg?.initDataUnsafe?.user?.id || 12345,
-      room_id: bookingData.roomId,
-      slot_date: bookingData.date,
-      start_time: bookingData.startTime,
-      num_of_people: bookingData.num_of_people,
-      duration_minutes: bookingData.duration
+    const chooseRoom = (room) => {
+        setSelectedRoomId(room.id_room);
+        setStep('roomdetails');
     };
 
-    const response = await fetch('http://localhost:8000/api/book', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-Telegram-Init-Data': tg?.initData || '' 
-      },
-      body: JSON.stringify(finalData)
-    });
+    const handleSelectDate = (date) => {
+        setBookingData(prev => ({ ...prev, booking_date: date }));
+        setStep('params');
+    };
 
-    const result = await response.json();
+    const handleSelectPeople = (count) => {
+        setBookingData(prev => ({ ...prev, people_count: count }));
+        setStep('params');
+    };
 
-    if (result.success) {
-      tg?.showAlert("Бронирование успешно создано!");
-      setStep('menu'); 
-    } else {
-      tg?.showAlert("Ошибка: " + (result.error || "Неизвестная ошибка"));
-    }
-  } catch (e) {
-    console.error(e);
-    tg?.showAlert("Ошибка соединения с сервером");
-  }
-};
+    const handleSelectTime = (slot) => {
+        setBookingData(prev => ({ ...prev, start_time: slot.start }));
+        setStep('params');
+    };
 
+    const handleSelectDuration = (minutes) => {
+        setBookingData(prev => ({ ...prev, duration_minutes: minutes }));
+        setStep('params');
+    };
 
-  return (
-    <div className="App">
-      {step === 'menu' && (
-        <MainMenu onStartBooking={() => setStep('rooms')} />
-      )}
+    const handleSelectRoom = (room) => {
+        setBookingData(prev => ({ ...prev, room_id: room.id_room }));
+        setStep('params');
+    };
 
-      {step === 'rooms' && (
-        <RoomList onSelectRoom={handleSelectRoom} />
-      )}
+    const handleOpenBookingDetails = async (booking) => {
+        try {
+            const details = await fetchBookingDetails(booking.book_id);
+            setSelectedBooking(details);
+            setStep('bookingdetails');
+        } catch (e) {
+            console.error(e);
+            tg?.showAlert("Ошибка загрузки информации о бронировании");
+        }
+    };
 
-      {step === 'date' && (
-        <DatePicker 
-          onSelectDate={handleSelectDate} 
-          goBack={() => setStep('rooms')} 
-        />
-      )}
+    const handleFinalBook = async () => {
+        try {
+            const finalData = {
+                user_id: tgId,  // 🆕 Используем tgId из контекста
+                room_id: bookingData.room_id,
+                booking_date: bookingData.booking_date,
+                start_time: bookingData.start_time,
+                people_count: bookingData.people_count,
+                duration_minutes: bookingData.duration_minutes
+            };
 
-      {step === 'people' && (
-        <Peoples 
-          onSelectPeople={handleSelectPeople} 
-          goBack={() => setStep('date')} 
-        />
-      )}
+            const result = await createBooking(finalData);
 
-      {step === 'time' && (
-        <ChooseTime 
-          selectedRoomId={bookingData.roomId}
-          selectedDate={bookingData.date}
-          num_of_people={bookingData.num_of_people}
-          onSelectTime={handleSelectTime}
-          goBack={() => setStep('people')} 
-        />
-      )}
+            if (result.success) {
+                tg?.showAlert("Бронирование успешно создано!");
+                setStep('menu');
+            }
+        } catch (e) {
+            console.error(e);
+            tg?.showAlert(e.message || "Ошибка соединения с сервером");
+        }
+    };
 
-      {step === 'duration' && (
-        <DurationPicker 
-          onSelect={handleSelectDuration} 
-          goBack={() => setStep('people')} 
-        />
-      )}
-    </div>
-  );
+    // 🆕 Универсальная функция отмены
+    const handleCancelBooking = async (bookId) => {
+        return new Promise((resolve, reject) => {
+            const requestCancellation = async () => {
+                try {
+                    const result = await cancelBooking(bookId, tgId);
+                    tg?.HapticFeedback?.notificationOccurred('success');
+                    tg?.showAlert("Бронирование успешно отменено");
+                    resolve(result);
+                } catch (error) {
+                    console.error("Ошибка отмены:", error);
+                    tg?.showAlert(`Ошибка: ${error.message}`);
+                    reject(error);
+                }
+            };
+
+            if (tg?.showConfirm) {
+                tg.showConfirm(
+                    "Вы действительно хотите отменить это бронирование?",
+                    (confirmed) => {
+                        if (confirmed) requestCancellation();
+                        else resolve(null);
+                    }
+                );
+            } else {
+                if (window.confirm("Отменить бронирование?")) {
+                    requestCancellation();
+                } else {
+                    resolve(null);
+                }
+            }
+        });
+    };
+
+    // 🆕 Отмена с возвратом в список
+    const handleCancelFromDetails = async (bookId) => {
+        try {
+            const result = await handleCancelBooking(bookId);
+            if (result) setStep('mybookings');
+        } catch (e) {}
+    };
+    const handleEditRoom = async (roomId) => {
+        try {
+            const roomDetails = await fetchRoomById(roomId);
+            setEditingRoom(roomDetails);
+            setStep('createroom');
+        } catch (e) {
+            tg?.showAlert("Ошибка загрузки данных комнаты");
+        }
+    };
+    
+    const handleBackFromForm = () => {
+        setEditingRoom(null);
+        setStep(editingRoom ? 'roomdetails' : 'rooms');
+    };
+
+    // ============================================
+    // РЕНДЕР
+    // ============================================
+
+    return (
+        <div className="App">
+            {step === 'menu' && (
+                <MainMenu
+                    onStartBooking={() => setStep('params')}
+                    onShowBookings={() => setStep('mybookings')}
+                    onShowRooms={() => setStep('rooms')}
+                    onShowAdmin={() => setStep('admin')}
+                />
+            )}
+
+            {step === 'params' && (
+                <BookingParams
+                    bookingData={bookingData}
+                    onChooseRoom={() => setStep('chooseroom')}
+                    onChooseDate={() => setStep('date')}
+                    onChooseTime={() => setStep('time')}
+                    onChooseDuration={() => setStep('duration')}
+                    onChoosePeople={() => setStep('people')}
+                    onFinalBook={handleFinalBook}
+                    goBack={() => setStep('menu')}
+                />
+            )}
+
+            {step === 'mybookings' && (
+                <MyBookings
+                    onBackToMenu={() => setStep('menu')}
+                    onOpenBooking={handleOpenBookingDetails}
+                    onCancel={handleCancelBooking}
+                />
+            )}
+
+            {step === 'bookingdetails' && (
+                <BookingDetails
+                    booking={selectedBooking}
+                    goBack={() => setStep('mybookings')}
+                    onCancel={() => handleCancelFromDetails(selectedBooking.book_id)}
+                />
+            )}
+
+            {step === 'rooms' && (
+                <RoomList 
+                    onSelectRoom={(room) => { setSelectedRoomId(room.id_room); setStep('roomdetails'); }} 
+                    goBack={() => setStep('menu')} 
+                    onCreateRoom={() => { setEditingRoom(null); setStep('createroom'); }} 
+                />
+            )}
+
+            {step === 'roomdetails' && (
+                <RoomDetails
+                    roomId={selectedRoomId}
+                    goBack={() => setStep('rooms')}
+                    onBook={() => setStep('date')}
+                    onEdit={() => handleEditRoom(selectedRoomId)}
+                />
+            )}
+
+            {step === 'date' && (
+                <DatePicker
+                    bookingData={bookingData}
+                    setBookingData={setBookingData}
+                    goBack={() => setStep('params')}
+                    onSelectDate={handleSelectDate}
+                />
+            )}
+
+            {step === 'chooseroom' && (
+                <ChooseRoom
+                    bookingData={bookingData}
+                    onSelectRoom={handleSelectRoom}
+                    goBack={() => setStep('params')}
+                />
+            )}
+
+            {step === 'people' && (
+                <Peoples
+                    bookingData={bookingData}
+                    onSelectPeople={handleSelectPeople}
+                    goBack={() => setStep('params')}
+                />
+            )}
+
+            {step === 'time' && (
+                <ChooseTime
+                    bookingData={bookingData}
+                    onSelectTime={handleSelectTime}
+                    goBack={() => setStep('params')}
+                />
+            )}
+
+            {step === 'duration' && (
+                <DurationPicker
+                    bookingData={bookingData}
+                    goBack={() => setStep('params')}
+                    onConfirm={handleSelectDuration}
+                />
+            )}
+
+            {step === 'createroom' && (
+                <CreateRoom 
+                    goBack={handleBackFromForm}
+                    roomToEdit={editingRoom} 
+                />
+            )}
+
+            {step === 'admin' && (
+                <AdminBookings goBack={() => setStep('menu')} />
+            )}
+        </div>
+    );
 }
 
 export default App;

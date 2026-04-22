@@ -4,7 +4,7 @@ from aiogram import Bot, BaseMiddleware
 from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select, and_, insert
-from models import Notification, Booking, Ban, User  # модели из models.py
+from db.models import Notification, Booking, Ban, User  # модели из models.py
 import inspect
 
 logger = logging.getLogger(__name__)
@@ -109,7 +109,8 @@ class BanAware(BaseMiddleware):
             query = (
                 select(Ban).join(User).where(
                     and_(
-                        User.tg_id == event.from_user.id,
+                        # Оборачиваем ID в str(), чтобы типы совпали
+                        User.tg_id == str(event.from_user.id),
                         Ban.is_active == True,
                         Ban.ban_start <= current_time,
                         Ban.ban_end >= current_time

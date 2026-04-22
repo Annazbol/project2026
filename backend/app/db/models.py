@@ -1,9 +1,9 @@
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timedelta
 from typing import Optional, List
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, Date, ForeignKey,
-    Integer, SmallInteger, String, Text, Time, TIMESTAMP,
+    Integer, SmallInteger, String, Text, Time, TIMESTAMP, Interval,
     UniqueConstraint, func, text, BigInteger  # Добавили BigInteger
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -21,18 +21,6 @@ class Tag(Base):
 
     def __repr__(self) -> str:
         return f"<Tag id={self.tag_id} name={self.name!r}>"
-
-
-class ActivityType(Base):
-    __tablename__ = "activity_types"
-    id_type: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
-    activities: Mapped[List["UserActivity"]] = relationship(back_populates="activity_type_rel",
-                                                            cascade="all, delete-orphan")
-
-    def __repr__(self) -> str:
-        return f"<ActivityType id={self.id_type} name={self.name!r}>"
-
 
 class BookingStatus(Base):
     __tablename__ = "books_statuses"
@@ -124,36 +112,17 @@ class User(Base):
     login: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(20), nullable=False)
     surname: Mapped[str] = mapped_column(String(20), nullable=False)
-    phone_number: Mapped[Optional[str]] = mapped_column(String(50))
+    tg_id: Mapped[Optional[int]] = mapped_column(String(50), unique=True, nullable=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     administrator: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    banned: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
 
-    # Telegram
-    tg_id: Mapped[Optional[int]] = mapped_column(BigInteger, unique=True, nullable=True)
-
-    activities: Mapped[List["UserActivity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     bans: Mapped[List["Ban"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     bookings: Mapped[List["Booking"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     notifications: Mapped[List["Notification"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User id={self.id_user} login={self.login!r} tg_id={self.tg_id} admin={self.administrator}>"
-
-
-class UserActivity(Base):
-    __tablename__ = "user_activity"
-    id_record: Mapped[int] = mapped_column(Integer, primary_key=True)
-    id_user: Mapped[int] = mapped_column(Integer, ForeignKey("users.id_user", ondelete="CASCADE", onupdate="CASCADE"),
-                                         nullable=False)
-    activity_type: Mapped[int] = mapped_column(Integer, ForeignKey("activity_types.id_type", ondelete="CASCADE",
-                                                                   onupdate="CASCADE"), nullable=False)
-    activity_time: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
-    user: Mapped["User"] = relationship(back_populates="activities")
-    activity_type_rel: Mapped["ActivityType"] = relationship(back_populates="activities")
-
-    def __repr__(self) -> str:
-        return f"<UserActivity id={self.id_record} user={self.id_user} type={self.activity_type}>"
-
 
 class Ban(Base):
     __tablename__ = "bans"
@@ -181,7 +150,7 @@ class Booking(Base):
                                                    nullable=True)
     slot_date_backup: Mapped[Optional[date]] = mapped_column(Date)
     start_time_backup: Mapped[Optional[time]] = mapped_column(Time)
-    duration: Mapped[time] = mapped_column(Time, nullable=False)
+    duration: Mapped[timedelta] = mapped_column(Interval, nullable=False)
     num_of_people: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[int] = mapped_column(Integer,
                                         ForeignKey("books_statuses.id_status", ondelete="CASCADE", onupdate="CASCADE"),

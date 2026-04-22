@@ -1,0 +1,247 @@
+.booking-details-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px;
+    padding-bottom: 32px;
+    color: var(--tg-theme-text-color, #000);
+    background: var(--tg-theme-bg-color, #fff);
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Фото */
+.booking-photo-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.booking-photo {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    display: block;
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge.status-активно,
+.status-badge.status-подтверждено {
+    background: #34c759;
+    color: white;
+}
+
+.status-badge.status-отменено {
+    background: #ff3b30;
+    color: white;
+}
+
+.status-badge.status-ожидание {
+    background: #ff9500;
+    color: white;
+}
+
+/* Заголовок */
+.booking-header {
+    margin-bottom: 20px;
+}
+
+.booking-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+}
+
+.building-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--tg-theme-secondary-bg-color, #f5f5f7);
+    border-radius: 12px;
+}
+
+.building-info .icon {
+    font-size: 18px;
+    line-height: 1.3;
+}
+
+.building-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.building-address {
+    font-size: 13px;
+    color: var(--tg-theme-hint-color, #888);
+}
+
+/* Теги */
+.booking-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.booking-tags .tag {
+    padding: 6px 12px;
+    background: var(--tg-theme-secondary-bg-color, #f5f5f7);
+    color: var(--tg-theme-text-color, #000);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Информационная карточка */
+.booking-info-card {
+    background: var(--tg-theme-secondary-bg-color, #f5f5f7);
+    border-radius: 16px;
+    padding: 4px 16px;
+    margin-bottom: 24px;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+}
+
+.info-icon {
+    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tg-theme-bg-color, #fff);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.info-label {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color, #888);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #000);
+}
+
+.time-end {
+    color: var(--tg-theme-hint-color, #888);
+    font-weight: 500;
+}
+
+.info-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.06);
+    margin-left: 50px;
+}
+
+.btn-edit-booking {
+    background-color: #7F49B4; /* Синий, как в Telegram */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    flex: 1;
+}
+
+.btn-edit-booking:active {
+    opacity: 0.8;
+}
+
+/* Адаптация под мобильные: кнопки в колонку на маленьких экранах */
+@media (max-width: 480px) {
+    .booking-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* Кнопки */
+.booking-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-cancel-booking,
+.btn-back {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel-booking {
+    background: #e34d4d20;
+    color: #e34d4d;
+}
+
+.btn-cancel-booking:active {
+    transform: scale(0.98);
+}
+
+.btn-back {
+    background: var(--tg-theme-secondary-bg-color, #f5f5f7);
+    color: var(--tg-theme-text-color, #000);
+}
+
+.btn-back:active {
+    transform: scale(0.98);
+}
+
+/* Состояния загрузки/ошибки */
+.loading-screen,
+.error-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-size: 16px;
+    color: var(--tg-theme-hint-color, #888);
+    text-align: center;
+    padding: 20px;
+}
+
+.error-screen {
+    color: #ff3b30;
+}

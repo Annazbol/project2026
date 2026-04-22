@@ -1,44 +1,137 @@
-from pydantic import BaseModel
-from datetime import date, time
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, ConfigDict
+from datetime import date, time, datetime, timedelta
+from typing import List, Optional
 
-class RoomResponse(BaseModel):
+class BaseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+class PhotoSchema(BaseSchema):
+    id_photo: int
+    file_path: str
+
+class TagSchema(BaseSchema):
+    tag_id: int
+    name: str
+
+class BuildingSchema(BaseSchema):
+    building_id: int
+    name: str
+    address: str
+
+class RoomShortResponse(BaseSchema):
+    """Для списка в ChooseRoom.jsx"""
+    id_room: int
+    room_number: int
+    capacity: int
+    id_building: int
+    preview_photo: Optional[str] = None
+    building: Optional[BuildingSchema] = None
+    tags: List[TagSchema] = []
+
+class RoomDetailResponse(BaseSchema):
+    """Для детальной карточки RoomDetails.jsx"""
     id_room: int
     room_number: int
     capacity: int
     description: str
+    building: BuildingSchema
+    tags: List[TagSchema]
+    photos: List[PhotoSchema]
+
+class RoomShortInfo(BaseModel):
+    id_room: int
+    room_number: int
+    capacity: int
+
+class BookingStatusSchema(BaseModel):
+    id_status: int
+    name: str
 
     class Config:
         from_attributes = True
 
-class TimeSlotRequest(BaseModel):
+class BookingShortResponse(BaseSchema):
+    book_id: int
     room_id: int
-    slot_date: date
+    slot_date_backup: date
+    start_time_backup: time
     num_of_people: int
 
-class PeopleCountResponse(BaseModel):
-    success: bool
-    available_counts: List[int]
-    warning: Optional[str] = None
-    error: Optional[str] = None
+    room: RoomShortResponse | None = None
+    status_rel: BookingStatusSchema | None = None
 
-class TimeSlotItem(BaseModel):
-    time: str
-    start: str
-    end: str
-    is_available: bool
-
-class TimeSlotResponse(BaseModel):
-    success: bool
-    time_slots: List[TimeSlotItem] = []
-    info_message: Optional[str] = None
-    warning: Optional[str] = None
-    error: Optional[str] = None
-
-class CreateBookingRequest(BaseModel):
-    user_id: str
+class BookingDetailResponse(BaseModel):
+    book_id: int
+    user_id: int
     room_id: int
-    slot_date: date
+    num_of_people: int
+    slot_date_backup: date
+    start_time_backup: time
+    duration: timedelta | None = None
+
+    room: RoomShortResponse | None = None
+    status_rel: BookingStatusSchema | None = None
+
+    class Config:
+        from_attributes = True
+
+class BookingStateRequest(BaseModel):
+    room_id: Optional[int] = None
+    booking_date: Optional[date] = None
+    start_time: Optional[time] = None
+    people_count: Optional[int] = 1
+    duration_minutes: Optional[int] = 30
+
+class BookingCreateRequest(BaseModel):
+    user_id: int
+    room_id: int
+    booking_date: date
     start_time: time
-    num_of_people: int
+    people_count: int
     duration_minutes: int
+
+class BookingUpdateRequest(BaseModel):
+    room_id: Optional[int] = None
+    booking_date: Optional[date] = None
+    start_time: Optional[time] = None
+    people_count: Optional[int] = None
+    duration_minutes: Optional[int] = None
+
+class AvailableOptionsResponse(BaseModel):
+    available_rooms: List[int]
+    available_dates: List[date]
+    available_slots: List[time]
+    max_capacity_found: int
+    max_duration_minutes: int = 180
+
+class UserSchema(BaseSchema):
+    id_user: int
+    login: Optional[str] = None
+    name: Optional[str] = None
+    surname: Optional[str] = None
+    tg_id: Optional[str] = None
+    administrator: bool
+    banned: bool
+
+
+class UserShortSchema(BaseSchema):
+    """Краткая информация о пользователе для админ-панели"""
+    id_user: int
+    name: str
+    surname: str
+    login: str
+
+
+class AdminBookingResponse(BaseSchema):
+    """Бронь с информацией о пользователе для админ-панели"""
+    book_id: int
+    user_id: int
+    room_id: int
+    num_of_people: int
+    slot_date_backup: date
+    start_time_backup: time
+    duration: timedelta | None = None
+
+    user: UserShortSchema | None = None
+    room: RoomShortResponse | None = None
+    status_rel: BookingStatusSchema | None = None

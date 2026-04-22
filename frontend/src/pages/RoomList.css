@@ -1,16 +1,52 @@
 .room-list-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
   padding: 16px;
+  background-color: var(--tg-theme-bg-color, #ffffff);
+  padding-bottom: 90px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  height: 100vh; /* Привязываем к высоте экрана */
+  background: var(--tg-theme-bg-color, #fff);
+}
+
+.room-list-header {
+    position: sticky;
+    top: 0;
+    padding: 16px;
+    background: var(--tg-theme-bg-color, #fff);
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Легкая тень для отделения */
+}
+
+.room-list-header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.scrollable-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 20px;
 }
 
 .room-card {
-  background: var(--tg-theme-secondary-bg-color, #ffffff);
-  border-radius: 16px;
+  background: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.2s;
+  border: none;
+  display: flex;
+    margin-bottom: 12px;
+  flex-direction: column;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  width: 100%;
+  transition: transform 0.1s ease;
 }
 
 .room-card:active {
@@ -19,31 +55,89 @@
 
 .room-image {
   width: 100%;
-  height: 160px;
+  height: 180px;
   object-fit: cover;
+  background-color: #ddd;
 }
 
 .room-info {
-  padding: 15px;
-}
-
-.room-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  padding: 12px;
 }
 
 .room-number {
   font-size: 18px;
-  font-weight: 700;
-  color: var(--tg-theme-text-color);
+  font-weight: bold;
+  margin-bottom: 4px;
+  display: block;
+  color: var(--tg-theme-text-color, #222222);
 }
 
-.room-status-badge {
-  background-color: var(--tg-theme-button-color);
-  color: var(--tg-theme-button-text-color);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+.room-description {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color, #707579);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.room-list-header {
+    margin-top: 0; /* Убираем лишние отступы сверху */
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.room-list-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.actions-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    background: var(--tg-theme-bg-color, #fff);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.btn-back {
+    width: 100%;
+    padding: 14px;
+    background: var(--tg-theme-secondary-bg-color, #f0f3f7);
+    color: var(--tg-theme-text-color, #1a1a2e);
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-back:active {
+    transform: scale(0.98);
+    background: var(--tg-theme-hint-color, #e0e0e0);
+}
+
+/* Большая кнопка админа в футере */
+.btn-admin-add {
+    flex: 1;
+    background: #4caf50; /* Зеленый цвет для создания */
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.btn-admin-add:active {
+    transform: scale(0.98);
+    opacity: 0.9;
 }
